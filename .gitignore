@@ -1,4 +1,15 @@
 
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+
+# Environment
+.env
+.env.local
+.env.*.local
+
 # InsForge & AI agent skills
 .insforge
 .agent
