@@ -1,0 +1,368 @@
+{
+  "version": "1.0.0",
+  "project": "letsgo-v1",
+  "generatedAt": "2026-03-28T20:55:00Z",
+  "branch": "c0/contract-lock",
+  "commitStatus": "uncommitted",
+  "lastKnownCommit": "0531dd7",
+
+  "spawnPlan": {
+    "wave1_c0_coordinator": "complete_with_caveats",
+    "wave2_foundation": "not_started",
+    "wave3_intelligence": "not_started",
+    "wave4_surfaces": "not_started",
+    "wave5_integration": "not_started"
+  },
+
+  "agents": {
+    "C0": {
+      "name": "Integration Coordinator",
+      "status": "complete_with_caveats",
+      "completedDeliverables": [
+        "Repository/package layout (npm workspaces monorepo)",
+        "Shared TypeScript types with Zod runtime validation for all 8 domain types",
+        "API contract types for all 9 endpoints",
+        "Feature flag catalog (6 flags)",
+        "Enum definitions (6 enums)",
+        "SQL migrations for all 10 tables",
+        "Edge function shells for all 10 endpoints + health-check",
+        "Architecture docs, service boundary docs, API reference, feature flags doc, event versioning doc",
+        "52 passing tests (28 domain + 24 API contract)"
+      ],
+      "caveats": [
+        "Work has NOT been committed to git yet",
+        "Edge function runtime propagation issue (see deployment section)"
+      ]
+    },
+    "A1": { "name": "Platform Backend", "status": "not_started" },
+    "A2": { "name": "Identity / Consent / Privacy", "status": "not_started" },
+    "A3": { "name": "Event Store / Persona Snapshot Backbone", "status": "not_started" },
+    "A4": { "name": "Inventory / Provider Normalization", "status": "not_started" },
+    "B1": { "name": "Recommendation / Ranking Engine", "status": "not_started" },
+    "B2": { "name": "Persona Logic / Feedback / Learning Engine", "status": "not_started" },
+    "B3": { "name": "AI Layer / Chat / Persona Boost", "status": "not_started" },
+    "C1": { "name": "iOS App / User Experience", "status": "not_started" },
+    "C2": { "name": "Proactive Delivery / Push / Email", "status": "not_started" },
+    "C3": { "name": "Internal Ops Console", "status": "not_started" },
+    "C4": { "name": "QA / Simulation / Reliability", "status": "not_started" }
+  },
+
+  "localArtifacts": {
+    "sharedPackage": {
+      "path": "packages/shared",
+      "status": "complete",
+      "tests": { "passing": 52, "failing": 0, "files": 2 },
+      "files": {
+        "enums": [
+          "src/enums/action-type.ts",
+          "src/enums/channel.ts",
+          "src/enums/confidence-label.ts",
+          "src/enums/pillar.ts",
+          "src/enums/price-band.ts",
+          "src/enums/social-mode.ts",
+          "src/enums/index.ts"
+        ],
+        "domain": [
+          "src/domain/inventory-item.ts",
+          "src/domain/persona-event.ts",
+          "src/domain/persona-snapshot.ts",
+          "src/domain/boost-inference.ts",
+          "src/domain/recommendation-card.ts",
+          "src/domain/learning-question.ts",
+          "src/domain/learning-answer.ts",
+          "src/domain/proactive-decision.ts",
+          "src/domain/index.ts"
+        ],
+        "api": [
+          "src/api/common.ts",
+          "src/api/feed.ts",
+          "src/api/actions.ts",
+          "src/api/chat.ts",
+          "src/api/persona.ts",
+          "src/api/persona-boost.ts",
+          "src/api/notifications.ts",
+          "src/api/learning.ts",
+          "src/api/account.ts",
+          "src/api/index.ts"
+        ],
+        "other": [
+          "src/feature-flags.ts",
+          "src/index.ts"
+        ]
+      }
+    },
+    "sqlMigrations": {
+      "path": "sql/",
+      "status": "complete",
+      "files": [
+        "001_persona_events.sql",
+        "002_persona_snapshots.sql",
+        "003_inventory_items.sql",
+        "004_learning_questions.sql",
+        "005_learning_answers.sql",
+        "006_proactive_decisions.sql",
+        "007_boost_inferences.sql",
+        "008_notification_preferences.sql",
+        "009_consent_records.sql",
+        "010_feature_flags.sql"
+      ]
+    },
+    "edgeFunctions": {
+      "path": "insforge/functions/",
+      "status": "complete",
+      "files": [
+        "feed/index.ts",
+        "actions/index.ts",
+        "chat-messages/index.ts",
+        "persona/index.ts",
+        "persona-boost-start/index.ts",
+        "persona-boost-status/index.ts",
+        "notifications-preferences/index.ts",
+        "learning-prompt/index.ts",
+        "learning-answer/index.ts",
+        "account-delete/index.ts",
+        "health-check/index.ts"
+      ]
+    },
+    "docs": {
+      "path": "docs/",
+      "status": "complete",
+      "files": [
+        "architecture.md",
+        "service-boundaries.md",
+        "api-contracts.md",
+        "feature-flags.md",
+        "event-versioning.md"
+      ]
+    },
+    "rootConfig": {
+      "status": "complete",
+      "files": [
+        "package.json",
+        "tsconfig.base.json",
+        ".gitignore",
+        "README.md"
+      ]
+    }
+  },
+
+  "insforgeDeployment": {
+    "projectId": "3e298b8a-17aa-4a6e-a5bd-009a75fec0f9",
+    "appkey": "88apdu26",
+    "region": "us-west",
+    "ossHost": "https://88apdu26.us-west.insforge.app",
+    "functionsDeploymentUrl": "https://88apdu26.functions.insforge.app",
+
+    "database": {
+      "status": "fully_deployed",
+      "tables": [
+        "persona_events",
+        "persona_snapshots",
+        "inventory_items",
+        "learning_questions",
+        "learning_answers",
+        "proactive_decisions",
+        "boost_inferences",
+        "notification_preferences",
+        "consent_records",
+        "feature_flags"
+      ],
+      "seededData": {
+        "feature_flags": 6
+      },
+      "verified": true
+    },
+
+    "functions": {
+      "status": "api_registered_but_runtime_stale",
+      "summary": "All 11 functions are registered as 'active' in the InsForge API and their code is correctly stored. However, the Deno Subhosting runtime only serves the 2 originally deployed functions (health-check, feed). New functions and code updates are NOT propagating to the runtime.",
+      "runtimeAvailable": ["health-check", "feed"],
+      "runtimeStale": true,
+      "runtimeServingOldCode": true,
+      "apiRegistered": [
+        "health-check",
+        "feed",
+        "actions",
+        "chat-messages",
+        "persona",
+        "persona-boost-start",
+        "persona-boost-status",
+        "notifications-preferences",
+        "learning-prompt",
+        "learning-answer",
+        "account-delete"
+      ],
+      "codeVerified": true
+    },
+
+    "secrets": {
+      "available": [
+        "INSFORGE_BASE_URL",
+        "ANON_KEY",
+        "API_KEY",
+        "INSFORGE_INTERNAL_URL",
+        "VERCEL_WEBHOOK_SECRET"
+      ]
+    }
+  },
+
+  "bugsDiscoveredAndFixed": [
+    {
+      "id": "BUG-001",
+      "title": "Edge functions used wrong export pattern",
+      "description": "Initially used Deno.serve(async (req) => {...}) instead of export default async function(req: Request): Promise<Response>",
+      "status": "fixed",
+      "affectedFiles": "all insforge/functions/*/index.ts"
+    },
+    {
+      "id": "BUG-002",
+      "title": "SDK createClient used wrong API",
+      "description": "Used createClient(url, key, opts) positional args instead of createClient({ baseUrl, anonKey/edgeFunctionToken })",
+      "status": "fixed",
+      "affectedFiles": "all insforge/functions/*/index.ts"
+    },
+    {
+      "id": "BUG-003",
+      "title": "Auth check used wrong method",
+      "description": "Used client.auth.getUser() instead of client.auth.getCurrentUser()",
+      "status": "fixed",
+      "affectedFiles": "all insforge/functions/*/index.ts"
+    },
+    {
+      "id": "BUG-004",
+      "title": "edgeFunctionToken: null causes INVALID_INPUT on deploy",
+      "description": "InsForge deployment validator rejects null values for edgeFunctionToken. Fixed by adding early !userToken guard that returns 401 before createClient() is called, ensuring token is always a string when passed.",
+      "status": "fixed",
+      "affectedFiles": "all authenticated insforge/functions/*/index.ts"
+    }
+  ],
+
+  "openIssues": [
+    {
+      "id": "ISSUE-001",
+      "title": "Deno Subhosting runtime not propagating new functions or code updates",
+      "severity": "high",
+      "description": "The InsForge Deno Subhosting runtime is frozen at the state from the initial deployment. Only health-check and feed are served by the runtime. All 9 other functions return 404 with available:[health-check,feed]. Code updates to existing functions also do not propagate. The deployedAt timestamp never changes on PUT. Deleting and re-creating functions does not help. Waited 10+ minutes with no change.",
+      "impact": "Cannot live-test authenticated endpoints or the 9 new function shells. Does NOT block local development or downstream agent work since contracts and code are correct.",
+      "workarounds": [
+        "Code correctness verified via 'functions code <slug>' CLI command",
+        "Database layer fully functional and verified via SQL queries",
+        "health-check function responds at runtime (with old code)"
+      ],
+      "suggestedActions": [
+        "Check if this is a known InsForge platform issue",
+        "Contact InsForge support about runtime refresh/rebuild",
+        "Try creating a fresh project and redeploying all functions",
+        "Check if there is a deployment webhook or manual trigger"
+      ]
+    }
+  ],
+
+  "todosForRevisit": [
+    {
+      "id": "REVISIT-001",
+      "priority": "P0",
+      "title": "Commit C0 work to git",
+      "description": "All C0 work is on branch c0/contract-lock but nothing has been committed. Git status shows all files as untracked or modified. Commit before proceeding to Wave 2.",
+      "agent": "C0"
+    },
+    {
+      "id": "REVISIT-002",
+      "priority": "P0",
+      "title": "Resolve edge function runtime propagation",
+      "description": "The Deno Subhosting runtime is not serving new functions or updated code. All 11 function shells need to be live-testable before downstream agents depend on them. See ISSUE-001.",
+      "agent": "C0"
+    },
+    {
+      "id": "REVISIT-003",
+      "priority": "P0",
+      "title": "Live-test all 10 endpoint shells end-to-end",
+      "description": "Once ISSUE-001 is resolved: invoke each function via CLI, verify (1) unauthenticated requests get 401, (2) wrong HTTP methods get 405, (3) authenticated requests get 501 NOT_IMPLEMENTED. This validates the auth + routing + shell pattern before downstream agents fill in logic.",
+      "agent": "C0"
+    },
+    {
+      "id": "REVISIT-004",
+      "priority": "P1",
+      "title": "Verify PersonaEvent discriminated union Zod schema completeness",
+      "description": "PersonaEvent has 7 payload types as a discriminated union. Verify the Zod schema correctly discriminates all 7 types at runtime and rejects malformed payloads. This is the most complex schema and downstream agents (A3, B2) depend on it heavily.",
+      "agent": "C0"
+    },
+    {
+      "id": "REVISIT-005",
+      "priority": "P1",
+      "title": "Validate SQL schema alignment with Zod types",
+      "description": "Cross-check that all SQL table columns match the Zod schema field names and types. Specifically verify JSONB columns (payload, preferences, hard_filters, etc.) will store the nested structures defined in the Zod schemas without data loss.",
+      "agent": "C0"
+    },
+    {
+      "id": "REVISIT-006",
+      "priority": "P1",
+      "title": "Add RLS policies to database tables",
+      "description": "No Row Level Security policies have been created yet. Before Wave 2 agents write data, tables need RLS policies restricting users to their own data (persona_events, persona_snapshots, learning_answers, etc.).",
+      "agent": "A1 or A2"
+    },
+    {
+      "id": "REVISIT-007",
+      "priority": "P2",
+      "title": "Review edge function CORS headers consistency",
+      "description": "Verify all edge functions use identical CORS header patterns. Currently health-check uses different allowed methods than authenticated functions. Standardize before iOS client integration.",
+      "agent": "C0 or A1"
+    }
+  ],
+
+  "waveReadiness": {
+    "wave2": {
+      "ready": true,
+      "blockedBy": ["REVISIT-001"],
+      "notes": "Contracts are locked. Downstream agents can begin once C0 work is committed. The runtime propagation issue (ISSUE-001) does not block local development. Agents A1-A4 can build against the shared package types and SQL schemas.",
+      "agents": {
+        "A1_platform_backend": {
+          "canStart": true,
+          "inputs": ["packages/shared types", "SQL migrations", "edge function patterns"],
+          "notes": "Needs to scaffold backend services that implement the edge function shells"
+        },
+        "A2_identity_consent": {
+          "canStart": true,
+          "inputs": ["consent_records table", "notification_preferences table", "account-delete function shell"],
+          "notes": "Auth flows, linked identities, deletion pipeline"
+        },
+        "A3_event_store": {
+          "canStart": true,
+          "inputs": ["PersonaEvent schema", "PersonaSnapshot schema", "persona_events table", "persona_snapshots table"],
+          "notes": "Event persistence, snapshot rebuild, replay engine"
+        },
+        "A4_inventory": {
+          "canStart": true,
+          "inputs": ["InventoryItem schema", "inventory_items table"],
+          "notes": "Provider adapters, normalization, nightly refresh"
+        }
+      }
+    },
+    "wave3": {
+      "ready": false,
+      "blockedBy": ["A3 event store", "A4 inventory"],
+      "agents": {
+        "B1_ranking": { "canStart": false, "blockedBy": ["A3", "A4"] },
+        "B2_persona_logic": { "canStart": false, "blockedBy": ["A3"] },
+        "B3_ai_layer": { "canStart": false, "blockedBy": ["A3", "B1 explanation facts", "B2 learning questions"] }
+      }
+    },
+    "wave4": {
+      "ready": false,
+      "blockedBy": ["B1", "B2", "B3"],
+      "agents": {
+        "C1_ios": { "canStart": false, "blockedBy": ["A2", "B1", "B2", "B3"] },
+        "C2_proactive": { "canStart": false, "blockedBy": ["A2", "B1", "B2"] },
+        "C3_ops_console": { "canStart": false, "blockedBy": ["A2", "A3", "A4", "B1", "B2", "C2"] },
+        "C4_qa": { "canStart": false, "blockedBy": ["contracts stable + services landing"] }
+      }
+    }
+  },
+
+  "mergeOrder": [
+    "C0 (current - needs commit)",
+    "A1", "A3", "A2", "A4",
+    "B1", "B2", "B3",
+    "C2", "C1", "C3", "C4"
+  ]
+}
