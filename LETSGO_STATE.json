@@ -1,13 +1,13 @@
 {
-  "version": "1.0.0",
+  "version": "1.1.0",
   "project": "letsgo-v1",
-  "generatedAt": "2026-03-28T20:55:00Z",
+  "generatedAt": "2026-03-28T21:30:00Z",
   "branch": "c0/contract-lock",
-  "commitStatus": "uncommitted",
-  "lastKnownCommit": "0531dd7",
+  "commitStatus": "committed_with_pending_changes",
+  "lastKnownCommit": "950fb97",
 
   "spawnPlan": {
-    "wave1_c0_coordinator": "complete_with_caveats",
+    "wave1_c0_coordinator": "complete",
     "wave2_foundation": "not_started",
     "wave3_intelligence": "not_started",
     "wave4_surfaces": "not_started",
@@ -17,21 +17,19 @@
   "agents": {
     "C0": {
       "name": "Integration Coordinator",
-      "status": "complete_with_caveats",
+      "status": "complete",
       "completedDeliverables": [
         "Repository/package layout (npm workspaces monorepo)",
         "Shared TypeScript types with Zod runtime validation for all 8 domain types",
         "API contract types for all 9 endpoints",
         "Feature flag catalog (6 flags)",
         "Enum definitions (6 enums)",
-        "SQL migrations for all 10 tables",
-        "Edge function shells for all 10 endpoints + health-check",
+        "SQL migrations for all 10 tables + RLS policies (11 migrations)",
+        "Edge function shells for all 10 endpoints + health-check (deployed and live-tested)",
         "Architecture docs, service boundary docs, API reference, feature flags doc, event versioning doc",
-        "52 passing tests (28 domain + 24 API contract)"
-      ],
-      "caveats": [
-        "Work has NOT been committed to git yet",
-        "Edge function runtime propagation issue (see deployment section)"
+        "52 shared package tests + 65 edge function tests = 117 total tests passing",
+        "RLS policies deployed for all 10 tables",
+        "CORS headers tightened to match actual accepted methods per function"
       ]
     },
     "A1": { "name": "Platform Backend", "status": "not_started" },
@@ -91,6 +89,11 @@
         ]
       }
     },
+    "functionsTestPackage": {
+      "path": "packages/functions-test",
+      "status": "complete",
+      "tests": { "passing": 65, "failing": 0, "files": 11 }
+    },
     "sqlMigrations": {
       "path": "sql/",
       "status": "complete",
@@ -104,7 +107,8 @@
         "007_boost_inferences.sql",
         "008_notification_preferences.sql",
         "009_consent_records.sql",
-        "010_feature_flags.sql"
+        "010_feature_flags.sql",
+        "011_rls_policies.sql"
       ]
     },
     "edgeFunctions": {
@@ -167,6 +171,7 @@
         "consent_records",
         "feature_flags"
       ],
+      "rlsPolicies": "deployed_for_all_10_tables",
       "seededData": {
         "feature_flags": 6
       },
@@ -174,12 +179,9 @@
     },
 
     "functions": {
-      "status": "api_registered_but_runtime_stale",
-      "summary": "All 11 functions are registered as 'active' in the InsForge API and their code is correctly stored. However, the Deno Subhosting runtime only serves the 2 originally deployed functions (health-check, feed). New functions and code updates are NOT propagating to the runtime.",
-      "runtimeAvailable": ["health-check", "feed"],
-      "runtimeStale": true,
-      "runtimeServingOldCode": true,
-      "apiRegistered": [
+      "status": "fully_deployed_and_live",
+      "summary": "All 11 functions are deployed, active, and serving correctly from the Deno Subhosting runtime. ISSUE-001 (runtime propagation) has been resolved.",
+      "deployed": [
         "health-check",
         "feed",
         "actions",
@@ -192,6 +194,7 @@
         "learning-answer",
         "account-delete"
       ],
+      "liveTested": true,
       "codeVerified": true
     },
 
@@ -210,157 +213,73 @@
     {
       "id": "BUG-001",
       "title": "Edge functions used wrong export pattern",
-      "description": "Initially used Deno.serve(async (req) => {...}) instead of export default async function(req: Request): Promise<Response>",
-      "status": "fixed",
-      "affectedFiles": "all insforge/functions/*/index.ts"
+      "status": "fixed"
     },
     {
       "id": "BUG-002",
       "title": "SDK createClient used wrong API",
-      "description": "Used createClient(url, key, opts) positional args instead of createClient({ baseUrl, anonKey/edgeFunctionToken })",
-      "status": "fixed",
-      "affectedFiles": "all insforge/functions/*/index.ts"
+      "status": "fixed"
     },
     {
       "id": "BUG-003",
       "title": "Auth check used wrong method",
-      "description": "Used client.auth.getUser() instead of client.auth.getCurrentUser()",
-      "status": "fixed",
-      "affectedFiles": "all insforge/functions/*/index.ts"
+      "status": "fixed"
     },
     {
       "id": "BUG-004",
       "title": "edgeFunctionToken: null causes INVALID_INPUT on deploy",
-      "description": "InsForge deployment validator rejects null values for edgeFunctionToken. Fixed by adding early !userToken guard that returns 401 before createClient() is called, ensuring token is always a string when passed.",
-      "status": "fixed",
-      "affectedFiles": "all authenticated insforge/functions/*/index.ts"
+      "status": "fixed"
     }
   ],
 
-  "openIssues": [
-    {
-      "id": "ISSUE-001",
-      "title": "Deno Subhosting runtime not propagating new functions or code updates",
-      "severity": "high",
-      "description": "The InsForge Deno Subhosting runtime is frozen at the state from the initial deployment. Only health-check and feed are served by the runtime. All 9 other functions return 404 with available:[health-check,feed]. Code updates to existing functions also do not propagate. The deployedAt timestamp never changes on PUT. Deleting and re-creating functions does not help. Waited 10+ minutes with no change.",
-      "impact": "Cannot live-test authenticated endpoints or the 9 new function shells. Does NOT block local development or downstream agent work since contracts and code are correct.",
-      "workarounds": [
-        "Code correctness verified via 'functions code <slug>' CLI command",
-        "Database layer fully functional and verified via SQL queries",
-        "health-check function responds at runtime (with old code)"
-      ],
-      "suggestedActions": [
-        "Check if this is a known InsForge platform issue",
-        "Contact InsForge support about runtime refresh/rebuild",
-        "Try creating a fresh project and redeploying all functions",
-        "Check if there is a deployment webhook or manual trigger"
-      ]
-    }
-  ],
+  "openIssues": [],
 
-  "todosForRevisit": [
-    {
-      "id": "REVISIT-001",
-      "priority": "P0",
-      "title": "Commit C0 work to git",
-      "description": "All C0 work is on branch c0/contract-lock but nothing has been committed. Git status shows all files as untracked or modified. Commit before proceeding to Wave 2.",
-      "agent": "C0"
-    },
-    {
-      "id": "REVISIT-002",
-      "priority": "P0",
-      "title": "Resolve edge function runtime propagation",
-      "description": "The Deno Subhosting runtime is not serving new functions or updated code. All 11 function shells need to be live-testable before downstream agents depend on them. See ISSUE-001.",
-      "agent": "C0"
-    },
-    {
-      "id": "REVISIT-003",
-      "priority": "P0",
-      "title": "Live-test all 10 endpoint shells end-to-end",
-      "description": "Once ISSUE-001 is resolved: invoke each function via CLI, verify (1) unauthenticated requests get 401, (2) wrong HTTP methods get 405, (3) authenticated requests get 501 NOT_IMPLEMENTED. This validates the auth + routing + shell pattern before downstream agents fill in logic.",
-      "agent": "C0"
-    },
-    {
-      "id": "REVISIT-004",
-      "priority": "P1",
-      "title": "Verify PersonaEvent discriminated union Zod schema completeness",
-      "description": "PersonaEvent has 7 payload types as a discriminated union. Verify the Zod schema correctly discriminates all 7 types at runtime and rejects malformed payloads. This is the most complex schema and downstream agents (A3, B2) depend on it heavily.",
-      "agent": "C0"
-    },
-    {
-      "id": "REVISIT-005",
-      "priority": "P1",
-      "title": "Validate SQL schema alignment with Zod types",
-      "description": "Cross-check that all SQL table columns match the Zod schema field names and types. Specifically verify JSONB columns (payload, preferences, hard_filters, etc.) will store the nested structures defined in the Zod schemas without data loss.",
-      "agent": "C0"
-    },
-    {
-      "id": "REVISIT-006",
-      "priority": "P1",
-      "title": "Add RLS policies to database tables",
-      "description": "No Row Level Security policies have been created yet. Before Wave 2 agents write data, tables need RLS policies restricting users to their own data (persona_events, persona_snapshots, learning_answers, etc.).",
-      "agent": "A1 or A2"
-    },
-    {
-      "id": "REVISIT-007",
-      "priority": "P2",
-      "title": "Review edge function CORS headers consistency",
-      "description": "Verify all edge functions use identical CORS header patterns. Currently health-check uses different allowed methods than authenticated functions. Standardize before iOS client integration.",
-      "agent": "C0 or A1"
-    }
+  "resolvedRevisits": [
+    { "id": "REVISIT-001", "title": "Commit C0 work to git", "status": "resolved", "resolution": "Committed in 63cae3c (C0 contracts) and 950fb97 (test stack)" },
+    { "id": "REVISIT-002", "title": "Resolve edge function runtime propagation", "status": "resolved", "resolution": "ISSUE-001 resolved after redeployment; all 11 functions now serving live" },
+    { "id": "REVISIT-003", "title": "Live-test all 10 endpoint shells", "status": "resolved", "resolution": "All functions live-tested: correct 401/405/501 responses verified" },
+    { "id": "REVISIT-004", "title": "Verify PersonaEvent discriminated union", "status": "resolved", "resolution": "7-variant discriminated union verified correct: literal discriminators, field types, z.discriminatedUnion() well-formed" },
+    { "id": "REVISIT-005", "title": "Validate SQL schema alignment with Zod types", "status": "resolved", "resolution": "All 7 main tables cross-checked against Zod schemas. Column types, enum CHECK values, nullable fields all align. Structural differences (flat SQL vs nested Zod) are expected persistence-to-domain mapping" },
+    { "id": "REVISIT-006", "title": "Add RLS policies to database tables", "status": "resolved", "resolution": "011_rls_policies.sql deployed with 20 policies across all 10 tables. user_id = auth.uid() for user-owned, public read for catalog/config tables" },
+    { "id": "REVISIT-007", "title": "Review edge function CORS headers consistency", "status": "resolved", "resolution": "Tightened Allow-Methods on 9 functions to match actual accepted methods. Redeployed and tests passing (65/65)" }
   ],
 
   "waveReadiness": {
     "wave2": {
       "ready": true,
-      "blockedBy": ["REVISIT-001"],
-      "notes": "Contracts are locked. Downstream agents can begin once C0 work is committed. The runtime propagation issue (ISSUE-001) does not block local development. Agents A1-A4 can build against the shared package types and SQL schemas.",
+      "blockedBy": [],
+      "notes": "All C0 deliverables complete. Contracts locked, schemas deployed, RLS in place, all functions live. Wave 2 agents can begin immediately.",
       "agents": {
         "A1_platform_backend": {
           "canStart": true,
-          "inputs": ["packages/shared types", "SQL migrations", "edge function patterns"],
-          "notes": "Needs to scaffold backend services that implement the edge function shells"
+          "inputs": ["packages/shared types", "SQL migrations", "edge function patterns"]
         },
         "A2_identity_consent": {
           "canStart": true,
-          "inputs": ["consent_records table", "notification_preferences table", "account-delete function shell"],
-          "notes": "Auth flows, linked identities, deletion pipeline"
+          "inputs": ["consent_records table", "notification_preferences table", "account-delete function shell"]
         },
         "A3_event_store": {
           "canStart": true,
-          "inputs": ["PersonaEvent schema", "PersonaSnapshot schema", "persona_events table", "persona_snapshots table"],
-          "notes": "Event persistence, snapshot rebuild, replay engine"
+          "inputs": ["PersonaEvent schema", "PersonaSnapshot schema", "persona_events table", "persona_snapshots table"]
         },
         "A4_inventory": {
           "canStart": true,
-          "inputs": ["InventoryItem schema", "inventory_items table"],
-          "notes": "Provider adapters, normalization, nightly refresh"
+          "inputs": ["InventoryItem schema", "inventory_items table"]
         }
       }
     },
     "wave3": {
       "ready": false,
-      "blockedBy": ["A3 event store", "A4 inventory"],
-      "agents": {
-        "B1_ranking": { "canStart": false, "blockedBy": ["A3", "A4"] },
-        "B2_persona_logic": { "canStart": false, "blockedBy": ["A3"] },
-        "B3_ai_layer": { "canStart": false, "blockedBy": ["A3", "B1 explanation facts", "B2 learning questions"] }
-      }
+      "blockedBy": ["A3 event store", "A4 inventory"]
     },
     "wave4": {
       "ready": false,
-      "blockedBy": ["B1", "B2", "B3"],
-      "agents": {
-        "C1_ios": { "canStart": false, "blockedBy": ["A2", "B1", "B2", "B3"] },
-        "C2_proactive": { "canStart": false, "blockedBy": ["A2", "B1", "B2"] },
-        "C3_ops_console": { "canStart": false, "blockedBy": ["A2", "A3", "A4", "B1", "B2", "C2"] },
-        "C4_qa": { "canStart": false, "blockedBy": ["contracts stable + services landing"] }
-      }
+      "blockedBy": ["B1", "B2", "B3"]
     }
   },
 
   "mergeOrder": [
-    "C0 (current - needs commit)",
+    "C0 (complete - committed + pending CORS/RLS changes)",
     "A1", "A3", "A2", "A4",
     "B1", "B2", "B3",
     "C2", "C1", "C3", "C4"
