@@ -12,17 +12,20 @@ travelBud/
 │   ├── src/enums/            # Shared enumerations
 │   └── __tests__/            # Type validation tests
 ├── insforge/functions/       # Edge functions (Deno Subhosting)
+│   ├── _shared/              # Shared helpers (cors, auth, response, validation, handler, etc.)
+│   │   └── inventory/        # Inventory pipeline, adapters, seed data
 │   ├── feed/                 # GET /feed
 │   ├── actions/              # POST /actions
 │   ├── chat-messages/        # POST /chat/messages
 │   ├── persona/              # GET + PATCH /persona
 │   ├── persona-boost-start/  # POST /persona-boost/start
 │   ├── persona-boost-status/ # GET /persona-boost/status
-│   ├── notifications-preferences/ # POST /notifications/preferences
+│   ├── notifications-preferences/ # POST /notifications/preferences (implemented)
 │   ├── learning-prompt/      # GET /learning/prompt
 │   ├── learning-answer/      # POST /learning/answer
-│   └── account-delete/       # DELETE /account
-├── sql/                      # Database migrations (001-010)
+│   ├── account-delete/       # DELETE /account (implemented)
+│   └── inventory-seed/       # POST /inventory/seed (new)
+├── sql/                      # Database migrations (001-011)
 ├── docs/                     # Architecture & contract documentation
 │   ├── architecture.md
 │   ├── service-boundaries.md
@@ -76,3 +79,4 @@ All shared types live in `packages/shared/src/domain/` with both TypeScript inte
 - **Database**: InsForge Managed Postgres
 - **Client**: Native iPhone (SwiftUI)
 - **Validation**: Zod schemas for runtime type safety
+- **Testing**: Vitest (196 tests across 34 files)

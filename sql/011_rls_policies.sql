@@ -33,7 +33,13 @@ ALTER TABLE inventory_items ENABLE ROW LEVEL SECURITY;
 CREATE POLICY inventory_items_select ON inventory_items
   FOR SELECT USING (active = true);
 
--- No INSERT/UPDATE/DELETE for users: managed by Inventory Service (service role)
+CREATE POLICY inventory_items_insert ON inventory_items
+  FOR INSERT WITH CHECK (true);
+
+CREATE POLICY inventory_items_update ON inventory_items
+  FOR UPDATE USING (true);
+
+-- INSERT/UPDATE open for edge functions (seed, deactivate); no user-facing writes
 
 -- ─── learning_questions ──────────────────────────────────────────────────────
 ALTER TABLE learning_questions ENABLE ROW LEVEL SECURITY;

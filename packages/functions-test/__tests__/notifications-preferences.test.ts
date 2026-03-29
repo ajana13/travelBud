@@ -32,19 +32,24 @@ describe("notifications-preferences", () => {
     expect(res.status).toBe(401);
   });
 
-  it("returns 501 NOT_IMPLEMENTED for valid authenticated request", async () => {
+  it("returns 400 VALIDATION_ERROR for request without valid body", async () => {
     setMockUser(MOCK_USER);
     const res = await handler(makeRequest("POST", { token: VALID_TOKEN }));
-    expect(res.status).toBe(501);
+    expect(res.status).toBe(400);
     const body = await getBody(res);
-    expectErrorEnvelope(body, "NOT_IMPLEMENTED");
+    expectErrorEnvelope(body, "VALIDATION_ERROR");
     expectCors(res);
   });
 
-  it("passes edgeFunctionToken to createClient", async () => {
+  it("returns 200 with valid notification preferences", async () => {
     setMockUser(MOCK_USER);
-    await handler(makeRequest("POST", { token: VALID_TOKEN }));
-    const opts = getLastCreateClientOpts();
-    expect(opts).toHaveProperty("edgeFunctionToken", VALID_TOKEN);
+    const res = await handler(makeRequest("POST", {
+      token: VALID_TOKEN,
+      body: { pushEnabled: true, emailEnabled: false, channels: { learning: true, recommendations: true, system: false } },
+    }));
+    expect(res.status).toBe(200);
+    const body = await getBody(res);
+    expect(body.data.pushEnabled).toBe(true);
+    expectCors(res);
   });
 });

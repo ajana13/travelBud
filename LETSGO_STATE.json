@@ -1,14 +1,14 @@
 {
-  "version": "1.1.0",
+  "version": "2.0.0",
   "project": "letsgo-v1",
-  "generatedAt": "2026-03-28T21:30:00Z",
-  "branch": "c0/contract-lock",
-  "commitStatus": "committed_with_pending_changes",
-  "lastKnownCommit": "950fb97",
+  "generatedAt": "2026-03-28T23:10:00Z",
+  "branch": "wave2/foundation",
+  "commitStatus": "uncommitted_wave2_changes",
+  "lastKnownCommit": "48b0919",
 
   "spawnPlan": {
     "wave1_c0_coordinator": "complete",
-    "wave2_foundation": "not_started",
+    "wave2_foundation": "complete",
     "wave3_intelligence": "not_started",
     "wave4_surfaces": "not_started",
     "wave5_integration": "not_started"
@@ -32,10 +32,51 @@
         "CORS headers tightened to match actual accepted methods per function"
       ]
     },
-    "A1": { "name": "Platform Backend", "status": "not_started" },
-    "A2": { "name": "Identity / Consent / Privacy", "status": "not_started" },
-    "A3": { "name": "Event Store / Persona Snapshot Backbone", "status": "not_started" },
-    "A4": { "name": "Inventory / Provider Normalization", "status": "not_started" },
+    "A1": {
+      "name": "Platform Backend",
+      "status": "complete",
+      "completedDeliverables": [
+        "Extended SDK mock with in-memory DB (select, insert, update, delete, upsert, eq, order, limit, single, maybeSingle)",
+        "Created _shared/ helpers: cors.ts, auth.ts, response.ts, validation.ts, handler.ts, feature-flags.ts, errors.ts, config.ts, logging.ts",
+        "Refactored all 11 edge functions to use _shared helpers (createHandler pattern)",
+        "22 SDK mock DB tests + 38 shared helper tests = 60 new tests"
+      ]
+    },
+    "A2": {
+      "name": "Identity / Consent / Privacy",
+      "status": "complete",
+      "completedDeliverables": [
+        "consent-service.ts: recordConsent, getActiveConsents, revokeConsent",
+        "notifications-preferences edge function: POST with Zod validation, upsert to DB",
+        "account-delete edge function: DELETE purges user data from 4 tables",
+        "12 new tests (consent service + impl tests)"
+      ]
+    },
+    "A3": {
+      "name": "Event Store / Persona Snapshot Backbone",
+      "status": "complete",
+      "completedDeliverables": [
+        "persona-event-store.ts: appendEvent, getEvents, getLatestSequence",
+        "persona-snapshot-store.ts: getSnapshot, upsertSnapshot, createDefaultSnapshot",
+        "persona-replay-engine.ts: replayEvents + 7 per-type handlers (applyAction, applyBoostInference, applyLearningAnswer, applyChatExtraction, applyConfirmation, applySystemDecision, applyPersonaEdit)",
+        "persona-projections.ts: generateProjections from preference tags",
+        "persona-state-manager.ts: applyDelta (atomic persona mutation pipeline)",
+        "30 new tests across 5 test files"
+      ]
+    },
+    "A4": {
+      "name": "Inventory / Provider Normalization",
+      "status": "complete",
+      "completedDeliverables": [
+        "ProviderAdapter interface with fetchItems, transform, validate, dedupeKey",
+        "3 mock adapters: events, dining, outdoors",
+        "30 Seattle seed items (10 per pillar) with real venue names",
+        "inventory-pipeline.ts: upsertInventoryItems, deactivateStaleItems",
+        "availability-validator.ts: validateAvailability",
+        "New inventory-seed edge function (POST seeds 30 items)",
+        "30 new tests across 5 test files"
+      ]
+    },
     "B1": { "name": "Recommendation / Ranking Engine", "status": "not_started" },
     "B2": { "name": "Persona Logic / Feedback / Learning Engine", "status": "not_started" },
     "B3": { "name": "AI Layer / Chat / Persona Boost", "status": "not_started" },
@@ -92,7 +133,7 @@
     "functionsTestPackage": {
       "path": "packages/functions-test",
       "status": "complete",
-      "tests": { "passing": 65, "failing": 0, "files": 11 }
+      "tests": { "passing": 196, "failing": 0, "files": 34 }
     },
     "sqlMigrations": {
       "path": "sql/",
@@ -115,6 +156,25 @@
       "path": "insforge/functions/",
       "status": "complete",
       "files": [
+        "_shared/cors.ts",
+        "_shared/auth.ts",
+        "_shared/response.ts",
+        "_shared/validation.ts",
+        "_shared/handler.ts",
+        "_shared/feature-flags.ts",
+        "_shared/errors.ts",
+        "_shared/config.ts",
+        "_shared/logging.ts",
+        "_shared/consent-service.ts",
+        "_shared/persona-event-store.ts",
+        "_shared/persona-snapshot-store.ts",
+        "_shared/persona-replay-engine.ts",
+        "_shared/persona-projections.ts",
+        "_shared/persona-state-manager.ts",
+        "_shared/inventory/provider-adapters.ts",
+        "_shared/inventory/seed-data.ts",
+        "_shared/inventory/inventory-pipeline.ts",
+        "_shared/inventory/availability-validator.ts",
         "feed/index.ts",
         "actions/index.ts",
         "chat-messages/index.ts",
@@ -125,7 +185,8 @@
         "learning-prompt/index.ts",
         "learning-answer/index.ts",
         "account-delete/index.ts",
-        "health-check/index.ts"
+        "health-check/index.ts",
+        "inventory-seed/index.ts"
       ]
     },
     "docs": {
@@ -173,7 +234,8 @@
       ],
       "rlsPolicies": "deployed_for_all_10_tables",
       "seededData": {
-        "feature_flags": 6
+        "feature_flags": 6,
+        "inventory_items": 30
       },
       "verified": true
     },
@@ -247,30 +309,19 @@
   "waveReadiness": {
     "wave2": {
       "ready": true,
-      "blockedBy": [],
-      "notes": "All C0 deliverables complete. Contracts locked, schemas deployed, RLS in place, all functions live. Wave 2 agents can begin immediately.",
+      "status": "complete",
+      "notes": "All Wave 2 agents (A1-A4) implemented. 196 tests passing. Shared helpers, event sourcing, identity services, and inventory pipeline all in place.",
       "agents": {
-        "A1_platform_backend": {
-          "canStart": true,
-          "inputs": ["packages/shared types", "SQL migrations", "edge function patterns"]
-        },
-        "A2_identity_consent": {
-          "canStart": true,
-          "inputs": ["consent_records table", "notification_preferences table", "account-delete function shell"]
-        },
-        "A3_event_store": {
-          "canStart": true,
-          "inputs": ["PersonaEvent schema", "PersonaSnapshot schema", "persona_events table", "persona_snapshots table"]
-        },
-        "A4_inventory": {
-          "canStart": true,
-          "inputs": ["InventoryItem schema", "inventory_items table"]
-        }
+        "A1_platform_backend": { "status": "complete" },
+        "A2_identity_consent": { "status": "complete" },
+        "A3_event_store": { "status": "complete" },
+        "A4_inventory": { "status": "complete" }
       }
     },
     "wave3": {
-      "ready": false,
-      "blockedBy": ["A3 event store", "A4 inventory"]
+      "ready": true,
+      "blockedBy": [],
+      "notes": "Wave 2 foundation is complete. B1 (Recommendation), B2 (Persona Logic), B3 (AI Layer) can begin."
     },
     "wave4": {
       "ready": false,
@@ -279,8 +330,53 @@
   },
 
   "mergeOrder": [
-    "C0 (complete - committed + pending CORS/RLS changes)",
-    "A1", "A3", "A2", "A4",
+    "C0 (complete - merged to main)",
+    "A1, A3, A2, A4 (complete - on wave2/foundation branch)",
+    "B1", "B2", "B3",
+    "C2", "C1", "C3", "C4"
+  ]
+}
+      "agents": {
+        "A1_platform_backend": { "status": "complete" },
+        "A2_identity_consent": { "status": "complete" },
+        "A3_event_store": { "status": "complete" },
+        "A4_inventory": { "status": "complete" }
+      }
+    },
+    "wave3": {
+      "ready": true,
+      "blockedBy": [],
+      "notes": "Wave 2 foundation is complete. B1 (Recommendation), B2 (Persona Logic), B3 (AI Layer) can begin."
+    },
+    "wave4": {
+      "ready": false,
+      "blockedBy": ["B1", "B2", "B3"]
+    }
+  },
+
+  "mergeOrder": [
+    "C0 (complete - merged to main)",
+    "A1, A3, A2, A4 (complete - on wave2/foundation branch)",
+    "B1", "B2", "B3",
+    "C2", "C1", "C3", "C4"
+  ]
+}
+      }
+    },
+    "wave3": {
+      "ready": true,
+      "blockedBy": [],
+      "notes": "Wave 2 foundation is complete. B1 (Recommendation), B2 (Persona Logic), B3 (AI Layer) can begin."
+    },
+    "wave4": {
+      "ready": false,
+      "blockedBy": ["B1", "B2", "B3"]
+    }
+  },
+
+  "mergeOrder": [
+    "C0 (complete - merged to main)",
+    "A1, A3, A2, A4 (complete - on wave2/foundation branch)",
     "B1", "B2", "B3",
     "C2", "C1", "C3", "C4"
   ]
