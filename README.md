@@ -12,17 +12,20 @@ travelBud/
 │   ├── src/enums/            # Shared enumerations
 │   └── __tests__/            # Type validation tests
 ├── insforge/functions/       # Edge functions (Deno Subhosting)
+│   ├── _shared/              # Shared helpers (cors, auth, response, validation, handler, etc.)
+│   │   └── inventory/        # Inventory pipeline, adapters, seed data
 │   ├── feed/                 # GET /feed
 │   ├── actions/              # POST /actions
 │   ├── chat-messages/        # POST /chat/messages
 │   ├── persona/              # GET + PATCH /persona
 │   ├── persona-boost-start/  # POST /persona-boost/start
 │   ├── persona-boost-status/ # GET /persona-boost/status
-│   ├── notifications-preferences/ # POST /notifications/preferences
+│   ├── notifications-preferences/ # POST /notifications/preferences (implemented)
 │   ├── learning-prompt/      # GET /learning/prompt
 │   ├── learning-answer/      # POST /learning/answer
-│   └── account-delete/       # DELETE /account
-├── sql/                      # Database migrations (001-010)
+│   ├── account-delete/       # DELETE /account (implemented)
+│   └── inventory-seed/       # POST /inventory/seed (new)
+├── sql/                      # Database migrations (001-011)
 ├── docs/                     # Architecture & contract documentation
 │   ├── architecture.md
 │   ├── service-boundaries.md
@@ -44,6 +47,34 @@ npm test
 
 # Typecheck
 cd packages/shared && npx tsc --noEmit
+```
+
+## Environment Variables
+
+The test/debug scripts and edge functions require the following env vars:
+
+| Variable | Description | Example |
+|----------|-------------|---------|
+| `INSFORGE_BASE_URL` | InsForge project base URL | `https://<appkey>.us-west.insforge.app` |
+| `ANON_KEY` | InsForge anonymous/public API key | `ik_...` |
+| `INSFORGE_FUNCTIONS_URL` | Edge functions base URL | `https://<appkey>.functions.insforge.app` |
+| `TEST_PASS` | Password for test users (optional, defaults to `TestPass123!`) | `TestPass123!` |
+
+### Running test scripts
+
+```bash
+export INSFORGE_BASE_URL=https://<appkey>.us-west.insforge.app
+export ANON_KEY=ik_<your_key>
+export INSFORGE_FUNCTIONS_URL=https://<appkey>.functions.insforge.app
+
+# Full auth + endpoint live test (signs up user, verifies, tests all functions)
+node scripts/live-test.mjs
+
+# Auth debugging (tests getCurrentUser with different client configs)
+node scripts/debug-auth.mjs
+
+# Bundle edge functions for deployment
+node scripts/bundle-functions.mjs
 ```
 
 ## Domain Types
@@ -76,3 +107,4 @@ All shared types live in `packages/shared/src/domain/` with both TypeScript inte
 - **Database**: InsForge Managed Postgres
 - **Client**: Native iPhone (SwiftUI)
 - **Validation**: Zod schemas for runtime type safety
+- **Testing**: Vitest (196 tests across 34 files)

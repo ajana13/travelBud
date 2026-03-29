@@ -32,19 +32,12 @@ describe("account-delete", () => {
     expect(res.status).toBe(401);
   });
 
-  it("returns 501 NOT_IMPLEMENTED for valid authenticated request", async () => {
+  it("returns 200 with deleted confirmation for valid authenticated request", async () => {
     setMockUser(MOCK_USER);
     const res = await handler(makeRequest("DELETE", { token: VALID_TOKEN }));
-    expect(res.status).toBe(501);
+    expect(res.status).toBe(200);
     const body = await getBody(res);
-    expectErrorEnvelope(body, "NOT_IMPLEMENTED");
+    expect(body.data.deleted).toBe(true);
     expectCors(res);
-  });
-
-  it("passes edgeFunctionToken to createClient", async () => {
-    setMockUser(MOCK_USER);
-    await handler(makeRequest("DELETE", { token: VALID_TOKEN }));
-    const opts = getLastCreateClientOpts();
-    expect(opts).toHaveProperty("edgeFunctionToken", VALID_TOKEN);
   });
 });

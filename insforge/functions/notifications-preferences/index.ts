@@ -1,49 +1,52 @@
 import { createClient } from "npm:@insforge/sdk";
+import { z } from "npm:zod";
+import { createHandler } from "../_shared/handler.ts";
+import { jsonOk, jsonError } from "../_shared/response.ts";
+import { validateBody } from "../_shared/validation.ts";
 
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Methods": "POST, OPTIONS",
-  "Access-Control-Allow-Headers": "Content-Type, Authorization",
-};
+const NotificationPrefsSchema = z.object({
+  pushEnabled: z.boolean(),
+  emailEnabled: z.boolean(),
+  channels: z.object({
+    learning: z.boolean(),
+    recommendations: z.boolean(),
+    system: z.boolean(),
+  }),
+});
 
-export default async function (req: Request): Promise<Response> {
-  if (req.method === "OPTIONS") {
-    return new Response(null, { status: 204, headers: corsHeaders });
-  }
+export default createHandler({
+  methods: ["POST"],
+  requireAuth: true,
+  handle: async ({ req, user, corsHeaders }) => {
+    const body = await req.json().catch(() => null);
+    const validation = validateBody(NotificationPrefsSchema, body);
 
-  if (req.method !== "POST") {
-    return new Response(
-      JSON.stringify({ data: null, error: { code: "METHOD_NOT_ALLOWED", message: "Use POST" } }),
-      { status: 405, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-    );
-  }
+    if (!validation.success) {
+      return jsonError(
+        "VALIDATION_ERROR",
+        validation.errors.join("; "),
+        corsHeaders,
+        400
+      );
+    }
 
-  const authHeader = req.headers.get("Authorization");
-  const userToken = authHeader ? authHeader.replace("Bearer ", "") : null;
+    const prefs = validation.data;
+    const client = createClient({
+      baseUrl: Deno.env.get("INSFORGE_BASE_URL"),
+      anonKey: Deno.env.get("ANON_KEY"),
+    });
+    const db = client.database;
 
-  if (!userToken) {
-    return new Response(
-      JSON.stringify({ data: null, error: { code: "UNAUTHORIZED", message: "Missing Authorization header" } }),
-      { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-    );
-  }
+    const row = {
+      id: user!.id,
+      user_id: user!.id,
+      push_enabled: prefs.pushEnabled,
+      email_enabled: prefs.emailEnabled,
+      channels: prefs.channels,
+      updated_at: new Date().toISOString(),
+    };
+    await db.from("notification_preferences").upsert([row]);
 
-  const client = createClient({
-    baseUrl: Deno.env.get("INSFORGE_BASE_URL"),
-    edgeFunctionToken: userToken,
-  });
-
-  const { data: userData } = await client.auth.getCurrentUser();
-  if (!userData?.user?.id) {
-    return new Response(
-      JSON.stringify({ data: null, error: { code: "UNAUTHORIZED", message: "Authentication required" } }),
-      { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-    );
-  }
-
-  // TODO: Implement notification preferences (Agent A2)
-  return new Response(
-    JSON.stringify({ data: null, error: { code: "NOT_IMPLEMENTED", message: "POST /notifications/preferences not yet implemented" } }),
-    { status: 501, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-  );
-}
+    return jsonOk(prefs, corsHeaders);
+  },
+});

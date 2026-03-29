@@ -5,6 +5,7 @@ export default defineConfig({
   resolve: {
     alias: {
       "npm:@insforge/sdk": path.resolve(__dirname, "mocks/insforge-sdk.ts"),
+      "npm:zod": "zod",
     },
   },
   test: {
