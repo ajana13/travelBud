@@ -1,10 +1,10 @@
 {
-  "version": "2.0.0",
+  "version": "3.0.0",
   "project": "letsgo-v1",
-  "generatedAt": "2026-03-28T23:10:00Z",
-  "branch": "wave2/foundation",
-  "commitStatus": "uncommitted_wave2_changes",
-  "lastKnownCommit": "48b0919",
+  "generatedAt": "2026-03-29T00:30:00Z",
+  "branch": "wave3/intelligence",
+  "commitStatus": "uncommitted_wave3_changes",
+  "lastKnownCommit": "fe1b9b5",
 
   "spawnPlan": {
     "wave1_c0_coordinator": "complete",
@@ -77,7 +77,14 @@
         "30 new tests across 5 test files"
       ]
     },
-    "B1": { "name": "Recommendation / Ranking Engine", "status": "not_started" },
+    "B1": {
+      "name": "Recommendation / Ranking Engine",
+      "status": "in_progress",
+      "completedDeliverables": [
+        "recommendation-service.ts: getCandidates, applyHardFilters, scoreCandidate, applyExploration, applyDiversity, assignConfidenceLabel, buildExplanationFacts, generateFeed",
+        "23 new tests in b1/recommendation-service.test.ts"
+      ]
+    },
     "B2": { "name": "Persona Logic / Feedback / Learning Engine", "status": "not_started" },
     "B3": { "name": "AI Layer / Chat / Persona Boost", "status": "not_started" },
     "C1": { "name": "iOS App / User Experience", "status": "not_started" },
@@ -133,7 +140,7 @@
     "functionsTestPackage": {
       "path": "packages/functions-test",
       "status": "complete",
-      "tests": { "passing": 196, "failing": 0, "files": 34 }
+      "tests": { "passing": 219, "failing": 0, "files": 35 }
     },
     "sqlMigrations": {
       "path": "sql/",
