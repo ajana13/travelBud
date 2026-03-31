@@ -79,10 +79,11 @@
     },
     "B1": {
       "name": "Recommendation / Ranking Engine",
-      "status": "in_progress",
+      "status": "complete",
       "completedDeliverables": [
         "recommendation-service.ts: getCandidates, applyHardFilters, scoreCandidate, applyExploration, applyDiversity, assignConfidenceLabel, buildExplanationFacts, generateFeed",
-        "23 new tests in b1/recommendation-service.test.ts"
+        "GET /feed endpoint wired: loads persona snapshot, generates ranked feed, returns FeedResponse",
+        "24 new tests (23 service + 1 updated endpoint)"
       ]
     },
     "B2": { "name": "Persona Logic / Feedback / Learning Engine", "status": "not_started" },

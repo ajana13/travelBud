@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import handler from "../../../insforge/functions/actions/index.ts";
-import { setMockUser, getLastCreateClientOpts, resetMock } from "../mocks/insforge-sdk.ts";
+import { setMockUser, resetMock } from "../mocks/insforge-sdk.ts";
 import { makeRequest, getBody, expectCors, expectErrorEnvelope, VALID_TOKEN, MOCK_USER } from "./helpers.ts";
 
 beforeEach(() => resetMock());
@@ -35,19 +35,29 @@ describe("actions", () => {
     expectErrorEnvelope(body, "UNAUTHORIZED");
   });
 
-  it("returns 501 NOT_IMPLEMENTED for valid authenticated request", async () => {
+  it("returns 400 on invalid body", async () => {
     setMockUser(MOCK_USER);
-    const res = await handler(makeRequest("POST", { token: VALID_TOKEN }));
-    expect(res.status).toBe(501);
+    const res = await handler(makeRequest("POST", { token: VALID_TOKEN, body: { bad: true } }));
+    expect(res.status).toBe(400);
     const body = await getBody(res);
-    expectErrorEnvelope(body, "NOT_IMPLEMENTED");
-    expectCors(res);
+    expectErrorEnvelope(body, "VALIDATION_ERROR");
   });
 
-  it("passes edgeFunctionToken to createClient", async () => {
+  it("returns 200 with accepted action for valid request", async () => {
     setMockUser(MOCK_USER);
-    await handler(makeRequest("POST", { token: VALID_TOKEN }));
-    const opts = getLastCreateClientOpts();
-    expect(opts).toHaveProperty("edgeFunctionToken", VALID_TOKEN);
+    const res = await handler(makeRequest("POST", {
+      token: VALID_TOKEN,
+      body: {
+        recommendationId: "550e8400-e29b-41d4-a716-446655440000",
+        actionType: "im_in",
+        reasons: null,
+        freeText: null,
+      },
+    }));
+    expect(res.status).toBe(200);
+    const body = await getBody(res);
+    expect(body.data.accepted).toBe(true);
+    expect(body.data.personaUpdated).toBe(true);
+    expect(body.data.feedStale).toBe(true);
   });
 });
