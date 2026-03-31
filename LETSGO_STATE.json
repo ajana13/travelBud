@@ -140,7 +140,7 @@
     "functionsTestPackage": {
       "path": "packages/functions-test",
       "status": "complete",
-      "tests": { "passing": 219, "failing": 0, "files": 35 }
+      "tests": { "passing": 220, "failing": 0, "files": 35 }
     },
     "sqlMigrations": {
       "path": "sql/",
