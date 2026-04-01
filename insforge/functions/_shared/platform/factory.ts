@@ -1,5 +1,5 @@
 import type { DatabasePort, AuthPort, RuntimePort } from "./ports.ts";
-import { InsForgeDatabase, InsForgeAuth, InsForgeRuntime } from "./insforge.ts";
+import { createInsForgeDatabase, createInsForgeAuth, createInsForgeRuntime } from "./insforge.ts";
 
 let _db: DatabasePort | null = null;
 let _auth: AuthPort | null = null;
@@ -18,7 +18,7 @@ export function setPlatform(
 export function getDatabase(): DatabasePort {
   if (!_db) {
     const runtime = getRuntime();
-    _db = new InsForgeDatabase(runtime);
+    _db = createInsForgeDatabase(runtime);
   }
   return _db;
 }
@@ -26,14 +26,14 @@ export function getDatabase(): DatabasePort {
 export function getAuth(): AuthPort {
   if (!_auth) {
     const runtime = getRuntime();
-    _auth = new InsForgeAuth(runtime);
+    _auth = createInsForgeAuth(runtime);
   }
   return _auth;
 }
 
 export function getRuntime(): RuntimePort {
   if (!_runtime) {
-    _runtime = new InsForgeRuntime();
+    _runtime = createInsForgeRuntime();
   }
   return _runtime;
 }

@@ -3,61 +3,55 @@ import type { DatabasePort, AuthPort, AuthResult, RuntimePort } from "./ports.ts
 
 // ─── Runtime ────────────────────────────────────────────────────────────────
 
-export class InsForgeRuntime implements RuntimePort {
-  getEnv(key: string): string | undefined {
-    return Deno.env.get(key);
-  }
+export function createInsForgeRuntime(): RuntimePort {
+  return {
+    getEnv(key: string): string | undefined {
+      return Deno.env.get(key);
+    },
+  };
 }
 
 // ─── Database ───────────────────────────────────────────────────────────────
 
-export class InsForgeDatabase implements DatabasePort {
-  private runtime: RuntimePort;
-
-  constructor(runtime: RuntimePort) {
-    this.runtime = runtime;
-  }
-
-  from(table: string) {
-    const internalUrl = this.runtime.getEnv("INSFORGE_INTERNAL_URL");
-    const apiKey = this.runtime.getEnv("API_KEY");
-    const client = createClient({
-      baseUrl: internalUrl || this.runtime.getEnv("INSFORGE_BASE_URL"),
-      anonKey: apiKey || this.runtime.getEnv("ANON_KEY"),
-    });
-    return client.database.from(table);
-  }
+export function createInsForgeDatabase(runtime: RuntimePort): DatabasePort {
+  return {
+    from(table: string) {
+      const internalUrl = runtime.getEnv("INSFORGE_INTERNAL_URL");
+      const apiKey = runtime.getEnv("API_KEY");
+      const client = createClient({
+        baseUrl: internalUrl || runtime.getEnv("INSFORGE_BASE_URL"),
+        anonKey: apiKey || runtime.getEnv("ANON_KEY"),
+      });
+      return client.database.from(table);
+    },
+  };
 }
 
 // ─── Auth ───────────────────────────────────────────────────────────────────
 
-export class InsForgeAuth implements AuthPort {
-  private runtime: RuntimePort;
+export function createInsForgeAuth(runtime: RuntimePort): AuthPort {
+  return {
+    async authenticateRequest(req: Request): Promise<AuthResult> {
+      const authHeader = req.headers.get("Authorization");
+      const token = authHeader ? authHeader.replace("Bearer ", "") : null;
 
-  constructor(runtime: RuntimePort) {
-    this.runtime = runtime;
-  }
+      if (!token) {
+        return { authenticated: false, user: null, error: "UNAUTHORIZED" };
+      }
 
-  async authenticateRequest(req: Request): Promise<AuthResult> {
-    const authHeader = req.headers.get("Authorization");
-    const token = authHeader ? authHeader.replace("Bearer ", "") : null;
+      const client = createClient({
+        baseUrl: runtime.getEnv("INSFORGE_BASE_URL"),
+        anonKey: runtime.getEnv("ANON_KEY"),
+        isServerMode: true,
+        edgeFunctionToken: token,
+      });
 
-    if (!token) {
-      return { authenticated: false, user: null, error: "UNAUTHORIZED" };
-    }
+      const { data: userData } = await client.auth.getCurrentUser();
+      if (!userData?.user?.id) {
+        return { authenticated: false, user: null, error: "UNAUTHORIZED" };
+      }
 
-    const client = createClient({
-      baseUrl: this.runtime.getEnv("INSFORGE_BASE_URL"),
-      anonKey: this.runtime.getEnv("ANON_KEY"),
-      isServerMode: true,
-      edgeFunctionToken: token,
-    });
-
-    const { data: userData } = await client.auth.getCurrentUser();
-    if (!userData?.user?.id) {
-      return { authenticated: false, user: null, error: "UNAUTHORIZED" };
-    }
-
-    return { authenticated: true, user: userData.user, error: null };
-  }
+      return { authenticated: true, user: userData.user, error: null };
+    },
+  };
 }
