@@ -1,4 +1,4 @@
-import { createClient } from "npm:@insforge/sdk";
+import { getDb } from "./db.ts";
 import { appendEvent, getLatestSequence } from "./persona-event-store.ts";
 import { applyDelta } from "./persona-state-manager.ts";
 import {
@@ -55,13 +55,6 @@ interface BoostStatusResult {
 
 // ─── DB helper ──────────────────────────────────────────────────────────────
 
-function getDb() {
-  const client = createClient({
-    baseUrl: Deno.env.get("INSFORGE_BASE_URL"),
-    anonKey: Deno.env.get("ANON_KEY"),
-  });
-  return client.database;
-}
 
 // ─── Mock LLM ───────────────────────────────────────────────────────────────
 
@@ -253,4 +246,3 @@ export async function getBoostStatus(
   };
 }
 
-export type { ChatReplyResult, BoostStartResult, BoostStatusResult, BoostInference, PersonaUpdate };

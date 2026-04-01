@@ -1,4 +1,4 @@
-import { createClient } from "npm:@insforge/sdk";
+import { getDb } from "./db.ts";
 
 export interface PersonaSnapshot {
   userId: string;
@@ -44,14 +44,6 @@ export interface PersonaSnapshot {
   lastEventSequence: number;
   rebuiltAt: string;
   updatedAt: string;
-}
-
-function getDb() {
-  const client = createClient({
-    baseUrl: Deno.env.get("INSFORGE_BASE_URL"),
-    anonKey: Deno.env.get("ANON_KEY"),
-  });
-  return client.database;
 }
 
 export function createDefaultSnapshot(userId: string): PersonaSnapshot {

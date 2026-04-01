@@ -6,7 +6,7 @@ import { z } from "npm:zod";
 
 const LearningAnswerRequestSchema = z.object({
   questionId: z.string(),
-  answer: z.record(z.unknown()),
+  answer: z.record(z.string(), z.unknown()),
   sourceSurface: z.enum(["push", "in_app_chat", "attached_follow_up"]),
   linkedRecommendationId: z.string().nullable(),
 });

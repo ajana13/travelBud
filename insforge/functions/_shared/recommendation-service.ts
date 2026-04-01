@@ -1,4 +1,4 @@
-import { createClient } from "npm:@insforge/sdk";
+import { getDb } from "./db.ts";
 
 // ─── Types ──────────────────────────────────────────────────────────────────
 
@@ -73,13 +73,6 @@ const EXPLORATION_RATE = 0.25;
 
 // ─── DB access ──────────────────────────────────────────────────────────────
 
-function getDb() {
-  const client = createClient({
-    baseUrl: Deno.env.get("INSFORGE_BASE_URL"),
-    anonKey: Deno.env.get("ANON_KEY"),
-  });
-  return client.database;
-}
 
 // ─── Candidate retrieval ────────────────────────────────────────────────────
 

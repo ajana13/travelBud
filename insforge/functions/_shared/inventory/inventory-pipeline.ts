@@ -1,12 +1,4 @@
-import { createClient } from "npm:@insforge/sdk";
-
-function getDb() {
-  const client = createClient({
-    baseUrl: Deno.env.get("INSFORGE_BASE_URL"),
-    anonKey: Deno.env.get("ANON_KEY"),
-  });
-  return client.database;
-}
+import { getDb } from "../db.ts";
 
 function itemToRow(item: Record<string, unknown>): Record<string, unknown> {
   const loc = (item.location ?? {}) as Record<string, unknown>;

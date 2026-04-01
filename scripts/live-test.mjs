@@ -55,26 +55,41 @@ async function run() {
 
   // Step 4: Test each auth-required function
   var tests = [
+    { name: "health-check", method: "GET", auth: false },
     { name: "feed", method: "GET" },
     { name: "persona", method: "GET" },
     { name: "persona-boost-status", method: "GET" },
-    { name: "persona-boost-start", method: "POST", body: {} },
-    { name: "actions", method: "POST", body: { action: "im_in", cardId: "test-card" } },
-    { name: "chat-messages", method: "POST", body: { message: "Hello LetsGo" } },
-    { name: "learning-prompt", method: "POST", body: {} },
-    { name: "learning-answer", method: "POST", body: { questionId: "test-q", answer: "test-a" } },
+    { name: "persona-boost-start", method: "POST", body: { email: TEST_EMAIL, consentGiven: true } },
+    { name: "actions", method: "POST", body: {
+      recommendationId: "00000000-0000-0000-0000-000000000001",
+      actionType: "im_in",
+      reasons: null,
+      freeText: null
+    }},
+    { name: "chat-messages", method: "POST", body: {
+      message: "I love sushi and hiking",
+      conversationId: null,
+      learningPromptResponseId: null
+    }},
+    { name: "learning-prompt", method: "GET" },
+    { name: "learning-answer", method: "POST", body: {
+      questionId: "00000000-0000-0000-0000-000000000001",
+      answer: { selected: "sushi" },
+      sourceSurface: "in_app_chat",
+      linkedRecommendationId: null
+    }},
     { name: "notifications-preferences", method: "POST", body: { pushEnabled: true, emailEnabled: false } },
     { name: "account-delete", method: "DELETE" },
   ];
 
-  console.log("\n4. Testing auth-required functions:\n");
+  console.log("\n4. Testing functions:\n");
   for (var t of tests) {
     try {
       var url = FUNCTIONS_URL + "/" + t.name;
-      var headers = {
-        "Authorization": "Bearer " + token,
-        "Content-Type": "application/json"
-      };
+      var headers = { "Content-Type": "application/json" };
+      if (t.auth !== false) {
+        headers["Authorization"] = "Bearer " + token;
+      }
       var fetchOpts = { method: t.method, headers: headers };
       if (t.body && t.method !== "GET") {
         fetchOpts.body = JSON.stringify(t.body);
@@ -82,12 +97,15 @@ async function run() {
       var res = await fetch(url, fetchOpts);
       var text = await res.text();
       var status = res.status;
-      var shortBody = text.length > 120 ? text.substring(0, 120) + "..." : text;
-      console.log("   " + t.name + " [" + t.method + "] => " + status + " " + shortBody);
+      var shortBody = text.length > 150 ? text.substring(0, 150) + "..." : text;
+      var icon = status >= 200 && status < 300 ? "OK" : status >= 400 && status < 500 ? "WARN" : "ERR";
+      console.log("   [" + icon + "] " + t.name + " " + t.method + " => " + status + " " + shortBody);
     } catch (e) {
-      console.log("   " + t.name + " [" + t.method + "] => ERROR: " + e.message);
+      console.log("   [ERR] " + t.name + " " + t.method + " => " + e.message);
     }
   }
+
+  console.log("\nDone.");
 }
 
 run().catch(function(e) { console.error("Fatal:", e); process.exit(1); });

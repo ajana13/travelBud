@@ -1,4 +1,4 @@
-import { createClient } from "npm:@insforge/sdk";
+import { getDb } from "./db.ts";
 import { appendEvent, getLatestSequence } from "./persona-event-store.ts";
 import { applyDelta } from "./persona-state-manager.ts";
 import {
@@ -48,17 +48,10 @@ interface LearningAnswerResult {
 
 // ─── Constants ──────────────────────────────────────────────────────────────
 
-const SESSION_CAP = 5;
+export const SESSION_CAP = 5;
 
 // ─── DB helper ──────────────────────────────────────────────────────────────
 
-function getDb() {
-  const client = createClient({
-    baseUrl: Deno.env.get("INSFORGE_BASE_URL"),
-    anonKey: Deno.env.get("ANON_KEY"),
-  });
-  return client.database;
-}
 
 // ─── Row mapping ────────────────────────────────────────────────────────────
 
@@ -203,5 +196,3 @@ export async function ingestAnswer(
   };
 }
 
-export { SESSION_CAP };
-export type { LearningQuestion, LearningAnswerInput, LearningPromptResult, LearningAnswerResult };

@@ -177,7 +177,7 @@ export function replayEvents(
   for (const event of events) {
     const handler = handlers[event.type];
     if (handler) {
-      current = handler(current, event.payload as AnyPayload);
+      current = handler(current, event.payload as unknown as AnyPayload);
     }
     current.lastEventSequence = event.sequenceNumber;
   }
