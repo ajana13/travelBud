@@ -24,3 +24,16 @@ dist/
 .roo
 .trae
 .windsurf
+
+# InsForge & AI agent skills
+.qoder
+
+# Swift / Xcode build artifacts
+LetsGo/.build/
+LetsGo/.DerivedData/
+*.xcuserstate
+**/xcuserdata/
+
+# macOS filesystem metadata
+.DS_Store
+**/.DS_Store
