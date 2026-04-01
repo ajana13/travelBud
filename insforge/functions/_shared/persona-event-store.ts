@@ -1,4 +1,4 @@
-import { createClient } from "npm:@insforge/sdk";
+import { getDb } from "./db.ts";
 
 interface PersonaEventInput {
   id: string;
@@ -9,14 +9,6 @@ interface PersonaEventInput {
   source: { surface: string; sessionId: string | null };
   timestamp: string;
   sequenceNumber: number;
-}
-
-function getDb() {
-  const client = createClient({
-    baseUrl: Deno.env.get("INSFORGE_BASE_URL"),
-    anonKey: Deno.env.get("ANON_KEY"),
-  });
-  return client.database;
 }
 
 export async function appendEvent(

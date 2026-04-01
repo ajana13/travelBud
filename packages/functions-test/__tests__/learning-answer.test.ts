@@ -1,9 +1,16 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import handler from "../../../insforge/functions/learning-answer/index.ts";
-import { setMockUser, getLastCreateClientOpts, resetMock } from "../mocks/insforge-sdk.ts";
+import { setMockUser, resetMock, getTableData } from "../mocks/insforge-sdk.ts";
 import { makeRequest, getBody, expectCors, expectErrorEnvelope, VALID_TOKEN, MOCK_USER } from "./helpers.ts";
 
 beforeEach(() => resetMock());
+
+const VALID_ANSWER_BODY = {
+  questionId: "q-001",
+  answer: { selected: "sushi" },
+  sourceSurface: "in_app_chat",
+  linkedRecommendationId: null,
+};
 
 describe("learning-answer", () => {
   it("returns 204 on OPTIONS preflight", async () => {
@@ -32,19 +39,31 @@ describe("learning-answer", () => {
     expect(res.status).toBe(401);
   });
 
-  it("returns 501 NOT_IMPLEMENTED for valid authenticated request", async () => {
+  it("returns 400 on invalid body", async () => {
     setMockUser(MOCK_USER);
-    const res = await handler(makeRequest("POST", { token: VALID_TOKEN }));
-    expect(res.status).toBe(501);
+    const res = await handler(makeRequest("POST", { token: VALID_TOKEN, body: { bad: true } }));
+    expect(res.status).toBe(400);
     const body = await getBody(res);
-    expectErrorEnvelope(body, "NOT_IMPLEMENTED");
+    expectErrorEnvelope(body, "VALIDATION_ERROR");
+  });
+
+  it("returns 200 on valid learning answer", async () => {
+    setMockUser(MOCK_USER);
+    const res = await handler(makeRequest("POST", { token: VALID_TOKEN, body: VALID_ANSWER_BODY }));
+    expect(res.status).toBe(200);
+    const body = await getBody(res);
+    expect(body.data.accepted).toBe(true);
+    expect(body.data.personaUpdated).toBe(true);
+    expect(body.data.feedStale).toBe(true);
     expectCors(res);
   });
 
-  it("passes edgeFunctionToken to createClient", async () => {
+  it("stores the answer in learning_answers table", async () => {
     setMockUser(MOCK_USER);
-    await handler(makeRequest("POST", { token: VALID_TOKEN }));
-    const opts = getLastCreateClientOpts();
-    expect(opts).toHaveProperty("edgeFunctionToken", VALID_TOKEN);
+    await handler(makeRequest("POST", { token: VALID_TOKEN, body: VALID_ANSWER_BODY }));
+    const answers = getTableData("learning_answers");
+    expect(answers).toBeDefined();
+    expect(answers!.length).toBe(1);
+    expect(answers![0].question_id).toBe("q-001");
   });
 });

@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import handler from "../../../insforge/functions/persona-boost-start/index.ts";
-import { setMockUser, getLastCreateClientOpts, resetMock } from "../mocks/insforge-sdk.ts";
+import { setMockUser, resetMock, getTableData } from "../mocks/insforge-sdk.ts";
 import { makeRequest, getBody, expectCors, expectErrorEnvelope, VALID_TOKEN, MOCK_USER } from "./helpers.ts";
 
 beforeEach(() => resetMock());
@@ -32,19 +32,35 @@ describe("persona-boost-start", () => {
     expect(res.status).toBe(401);
   });
 
-  it("returns 501 NOT_IMPLEMENTED for valid authenticated request", async () => {
+  it("returns 400 on invalid body", async () => {
     setMockUser(MOCK_USER);
-    const res = await handler(makeRequest("POST", { token: VALID_TOKEN }));
-    expect(res.status).toBe(501);
+    const res = await handler(makeRequest("POST", { token: VALID_TOKEN, body: { bad: true } }));
+    expect(res.status).toBe(400);
     const body = await getBody(res);
-    expectErrorEnvelope(body, "NOT_IMPLEMENTED");
+    expectErrorEnvelope(body, "VALIDATION_ERROR");
+  });
+
+  it("returns 200 with boost result for valid request", async () => {
+    setMockUser(MOCK_USER);
+    const res = await handler(makeRequest("POST", {
+      token: VALID_TOKEN,
+      body: { email: "user@test.com", consentGiven: true },
+    }));
+    expect(res.status).toBe(200);
+    const body = await getBody(res);
+    expect(body.data.boostId).toBeTruthy();
+    expect(body.data.status).toBe("completed");
     expectCors(res);
   });
 
-  it("passes edgeFunctionToken to createClient", async () => {
+  it("returns failed status when consent not given", async () => {
     setMockUser(MOCK_USER);
-    await handler(makeRequest("POST", { token: VALID_TOKEN }));
-    const opts = getLastCreateClientOpts();
-    expect(opts).toHaveProperty("edgeFunctionToken", VALID_TOKEN);
+    const res = await handler(makeRequest("POST", {
+      token: VALID_TOKEN,
+      body: { email: "user@test.com", consentGiven: false },
+    }));
+    expect(res.status).toBe(200);
+    const body = await getBody(res);
+    expect(body.data.status).toBe("failed");
   });
 });

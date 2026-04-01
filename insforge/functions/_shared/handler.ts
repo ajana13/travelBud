@@ -1,6 +1,7 @@
 import { buildCorsHeaders, handlePreflight } from "./cors.ts";
 import { authenticateRequest } from "./auth.ts";
 import { methodNotAllowed, unauthorized } from "./response.ts";
+import { setEdgeFunctionToken } from "./db.ts";
 
 interface HandlerContext {
   req: Request;
@@ -40,13 +41,20 @@ export function createHandler(
           corsHeaders
         );
       }
-      const res = await config.handle({
-        req,
-        user: authResult.user,
-        client: authResult.client,
-        corsHeaders,
-      });
-      return appendHeaders(res, corsHeaders);
+      const authHeader = req.headers.get("Authorization");
+      const token = authHeader ? authHeader.replace("Bearer ", "") : null;
+      setEdgeFunctionToken(token);
+      try {
+        const res = await config.handle({
+          req,
+          user: authResult.user,
+          client: authResult.client,
+          corsHeaders,
+        });
+        return appendHeaders(res, corsHeaders);
+      } finally {
+        setEdgeFunctionToken(null);
+      }
     }
 
     const res = await config.handle({

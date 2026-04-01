@@ -67,7 +67,9 @@ export INSFORGE_BASE_URL=https://<appkey>.us-west.insforge.app
 export ANON_KEY=ik_<your_key>
 export INSFORGE_FUNCTIONS_URL=https://<appkey>.functions.insforge.app
 
-# Full auth + endpoint live test (signs up user, verifies, tests all functions)
+# Live integration test suite (17 tests across 7 groups)
+# Creates a test user, runs multi-step journeys with shape assertions,
+# validates state transitions, then cleans up. Exits 1 on any failure.
 node scripts/live-test.mjs
 
 # Auth debugging (tests getCurrentUser with different client configs)
@@ -76,6 +78,15 @@ node scripts/debug-auth.mjs
 # Bundle edge functions for deployment
 node scripts/bundle-functions.mjs
 ```
+
+### Testing Architecture
+
+| Layer | Tool | Tests | Speed |
+|-------|------|-------|-------|
+| Unit + behavioral | Vitest (in-memory mocks) | 384 across 53 files | ~5 seconds |
+| Live integration | `scripts/live-test.mjs` | 17 tests, 7 journey groups | ~15 seconds |
+
+The unit tests use an in-memory mock of the InsForge SDK with no external dependencies. The live integration tests hit the deployed InsForge functions and validate response shapes, state transitions (e.g., boost -> check status -> verify inferences), and multi-step user journeys.
 
 ## Domain Types
 
@@ -107,4 +118,4 @@ All shared types live in `packages/shared/src/domain/` with both TypeScript inte
 - **Database**: InsForge Managed Postgres
 - **Client**: Native iPhone (SwiftUI)
 - **Validation**: Zod schemas for runtime type safety
-- **Testing**: Vitest (196 tests across 34 files)
+- **Testing**: Vitest (384 tests across 53 files)

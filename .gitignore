@@ -18,8 +18,10 @@ dist/
 .augment
 .claude
 .cline
+.cursor
 .github/copilot*
 .kilocode
+.qoder
 .qwen
 .roo
 .trae

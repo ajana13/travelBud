@@ -70,9 +70,11 @@ function cloneSnap(snap: PersonaSnapshot): PersonaSnapshot {
 const ACTION_WEIGHTS: Record<string, number> = {
   im_in: 0.3,
   maybe: 0.1,
-  pass: -0.2,
+  pass: -0.15,
   cant: 0,
 };
+
+const AMBIGUITY_DISCOUNT = 0.5;
 
 export function applyAction(
   snap: PersonaSnapshot,
@@ -80,10 +82,47 @@ export function applyAction(
   meta?: { tags?: string[] }
 ): PersonaSnapshot {
   const result = cloneSnap(snap);
-  const weight = ACTION_WEIGHTS[payload.actionType] ?? 0;
+  const baseWeight = ACTION_WEIGHTS[payload.actionType] ?? 0;
   if (meta?.tags) {
     for (const tag of meta.tags) {
-      result.preferences.tags[tag] = (result.preferences.tags[tag] || 0) + weight;
+      const current = result.preferences.tags[tag] || 0;
+      let weight = baseWeight;
+
+      if (payload.actionType === "pass") {
+        if (current > 0) {
+          // Contradiction: positive signal contradicted by pass, accelerate decay
+          weight = baseWeight * 1.5;
+        } else if (Math.abs(current) < 0.3) {
+          // Ambiguity-first: discount the negative when confidence is already low
+          weight = baseWeight * AMBIGUITY_DISCOUNT;
+        }
+      } else if (payload.actionType === "im_in" && current < 0) {
+        // Contradiction: positive signal overrides stale negative faster
+        weight = baseWeight * 1.5;
+      }
+
+      result.preferences.tags[tag] = current + weight;
+    }
+  }
+  return result;
+}
+
+export function decayPreferences(snap: PersonaSnapshot, factor = 0.05): PersonaSnapshot {
+  const result = cloneSnap(snap);
+  for (const tag of Object.keys(result.preferences.tags)) {
+    const val = result.preferences.tags[tag];
+    if (Math.abs(val) < 0.01) {
+      delete result.preferences.tags[tag];
+    } else {
+      result.preferences.tags[tag] = val * (1 - factor);
+    }
+  }
+  for (const pillar of Object.keys(result.preferences.pillar)) {
+    const val = result.preferences.pillar[pillar];
+    if (Math.abs(val) < 0.01) {
+      delete result.preferences.pillar[pillar];
+    } else {
+      result.preferences.pillar[pillar] = val * (1 - factor);
     }
   }
   return result;
@@ -109,6 +148,11 @@ export function applyLearningAnswer(
   result.cadenceState.answeredCount += 1;
   result.cadenceState.lastUpdatedAt = new Date().toISOString();
   result.learningBudget.usedThisPeriod += 1;
+  if (payload.sourceSurface === "attached_follow_up") {
+    result.learningBudget.attachedCount = (result.learningBudget.attachedCount || 0) + 1;
+  } else {
+    result.learningBudget.standaloneCount = (result.learningBudget.standaloneCount || 0) + 1;
+  }
   return result;
 }
 
@@ -117,6 +161,12 @@ export function applyChatExtraction(
   payload: ChatExtractionPayload
 ): PersonaSnapshot {
   const result = cloneSnap(snap);
+  if (payload.field) {
+    const isNegative = payload.newValue?.toLowerCase().startsWith("avoids");
+    const delta = isNegative ? -0.3 : 0.3;
+    result.preferences.tags[payload.field] =
+      (result.preferences.tags[payload.field] || 0) + delta;
+  }
   return result;
 }
 
@@ -177,7 +227,7 @@ export function replayEvents(
   for (const event of events) {
     const handler = handlers[event.type];
     if (handler) {
-      current = handler(current, event.payload as AnyPayload);
+      current = handler(current, event.payload as unknown as AnyPayload);
     }
     current.lastEventSequence = event.sequenceNumber;
   }

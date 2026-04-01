@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import handler from "../../../insforge/functions/persona/index.ts";
-import { setMockUser, getLastCreateClientOpts, resetMock } from "../mocks/insforge-sdk.ts";
+import { setMockUser, resetMock } from "../mocks/insforge-sdk.ts";
 import { makeRequest, getBody, expectCors, expectErrorEnvelope, VALID_TOKEN, MOCK_USER } from "./helpers.ts";
 
 beforeEach(() => resetMock());
@@ -39,30 +39,37 @@ describe("persona", () => {
     expect(res.status).toBe(401);
   });
 
-  it("returns 501 NOT_IMPLEMENTED on GET with valid auth", async () => {
+  it("returns 200 with persona view on GET", async () => {
     setMockUser(MOCK_USER);
     const res = await handler(makeRequest("GET", { token: VALID_TOKEN }));
-    expect(res.status).toBe(501);
+    expect(res.status).toBe(200);
     const body = await getBody(res);
-    expectErrorEnvelope(body, "NOT_IMPLEMENTED");
-    expect(body.error.message).toContain("GET");
+    expect(body.data).toBeDefined();
+    expect(Array.isArray(body.data.projections)).toBe(true);
+    expect(Array.isArray(body.data.hardFilters)).toBe(true);
+    expect(body.data.boostState).toBeDefined();
+    expect(typeof body.data.boostState.completed).toBe("boolean");
     expectCors(res);
   });
 
-  it("returns 501 NOT_IMPLEMENTED on PATCH with valid auth", async () => {
+  it("returns 400 on PATCH with invalid body", async () => {
     setMockUser(MOCK_USER);
-    const res = await handler(makeRequest("PATCH", { token: VALID_TOKEN }));
-    expect(res.status).toBe(501);
+    const res = await handler(makeRequest("PATCH", { token: VALID_TOKEN, body: { bad: true } }));
+    expect(res.status).toBe(400);
     const body = await getBody(res);
-    expectErrorEnvelope(body, "NOT_IMPLEMENTED");
-    expect(body.error.message).toContain("PATCH");
-    expectCors(res);
+    expectErrorEnvelope(body, "VALIDATION_ERROR");
   });
 
-  it("passes edgeFunctionToken to createClient", async () => {
+  it("returns 200 on PATCH with valid edits", async () => {
     setMockUser(MOCK_USER);
-    await handler(makeRequest("GET", { token: VALID_TOKEN }));
-    const opts = getLastCreateClientOpts();
-    expect(opts).toHaveProperty("edgeFunctionToken", VALID_TOKEN);
+    const res = await handler(makeRequest("PATCH", {
+      token: VALID_TOKEN,
+      body: { edits: [], hardFilterToggles: [] },
+    }));
+    expect(res.status).toBe(200);
+    const body = await getBody(res);
+    expect(body.data.updated).toBe(false);
+    expect(Array.isArray(body.data.projections)).toBe(true);
+    expect(typeof body.data.feedStale).toBe("boolean");
   });
 });
