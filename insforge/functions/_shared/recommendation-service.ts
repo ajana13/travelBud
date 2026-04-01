@@ -1,4 +1,5 @@
 import { getDb } from "./db.ts";
+import { polishExplanation } from "./ai-service.ts";
 
 // ─── Types ──────────────────────────────────────────────────────────────────
 
@@ -168,19 +169,39 @@ export function applyExploration(
 
 export function applyDiversity(
   items: ScoredItem[],
-  maxPerPillar: number
+  maxPerDimension: number
 ): ScoredItem[] {
-  const pillarCount: Record<string, number> = {};
+  const counts: Record<string, Record<string, number>> = {
+    pillar: {},
+    time_shape: {},
+    social_mode: {},
+    price_band: {},
+  };
   const result: ScoredItem[] = [];
 
   const sorted = [...items].sort((a, b) => b.score - a.score);
 
   for (const s of sorted) {
-    const p = s.item.pillar;
-    const count = pillarCount[p] ?? 0;
-    if (count < maxPerPillar) {
+    const dims: Record<string, string> = {
+      pillar: s.item.pillar,
+      time_shape: s.item.time_shape,
+      social_mode: s.item.social_mode,
+      price_band: s.item.price_band,
+    };
+
+    let blocked = false;
+    for (const [dim, val] of Object.entries(dims)) {
+      if ((counts[dim][val] ?? 0) >= maxPerDimension) {
+        blocked = true;
+        break;
+      }
+    }
+
+    if (!blocked) {
       result.push(s);
-      pillarCount[p] = count + 1;
+      for (const [dim, val] of Object.entries(dims)) {
+        counts[dim][val] = (counts[dim][val] ?? 0) + 1;
+      }
     }
   }
 
@@ -275,7 +296,7 @@ export async function generateFeed(
     const isExploration = exploredIds.has(s.item.id);
     const label = assignConfidenceLabel(s.score, s.tagOverlap);
     const facts = buildExplanationFacts(s.item, snapshot, s.tagOverlap);
-    const text = buildExplanationText(facts);
+    const text = polishExplanation(facts);
 
     return {
       id: crypto.randomUUID(),

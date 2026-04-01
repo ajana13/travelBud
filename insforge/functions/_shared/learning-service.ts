@@ -7,6 +7,7 @@ import {
   upsertSnapshot,
   type PersonaSnapshot,
 } from "./persona-snapshot-store.ts";
+import { generateLearningQuestion } from "./ai-service.ts";
 
 // ─── Types ──────────────────────────────────────────────────────────────────
 
@@ -122,7 +123,8 @@ export async function selectNextQuestion(
     .limit(20);
 
   if (error || !data || (data as unknown[]).length === 0) {
-    return { prompt: null, sessionLearningCount: used, sessionCap: SESSION_CAP };
+    const generated = generateLearningQuestion(null);
+    return { prompt: generated as unknown as LearningQuestion, sessionLearningCount: used, sessionCap: SESSION_CAP };
   }
 
   const rows = data as Array<Record<string, unknown>>;
@@ -131,7 +133,8 @@ export async function selectNextQuestion(
     .filter((q) => !q.expiresAt || q.expiresAt > now);
 
   if (candidates.length === 0) {
-    return { prompt: null, sessionLearningCount: used, sessionCap: SESSION_CAP };
+    const generated = generateLearningQuestion(null);
+    return { prompt: generated as unknown as LearningQuestion, sessionLearningCount: used, sessionCap: SESSION_CAP };
   }
 
   return {
@@ -139,6 +142,37 @@ export async function selectNextQuestion(
     sessionLearningCount: used,
     sessionCap: SESSION_CAP,
   };
+}
+
+const PUSH_TTL_MS = 60 * 60 * 1000;
+
+export async function markPushTTL(questionId: string): Promise<void> {
+  const db = getDb();
+  const expiresAt = new Date(Date.now() + PUSH_TTL_MS).toISOString();
+  await db
+    .from("learning_questions")
+    .update({ expires_at: expiresAt })
+    .eq("id", questionId);
+}
+
+export async function expireStalePushNudges(): Promise<number> {
+  const db = getDb();
+  const now = new Date().toISOString();
+  const { data } = await db
+    .from("learning_questions")
+    .select("id")
+    .eq("active", true);
+  if (!data) return 0;
+
+  const rows = data as Array<Record<string, unknown>>;
+  let expired = 0;
+  for (const row of rows) {
+    const expiresAt = row.expires_at as string | null;
+    if (expiresAt && expiresAt < now) {
+      expired++;
+    }
+  }
+  return expired;
 }
 
 // ─── Ingest answer ──────────────────────────────────────────────────────────
@@ -188,11 +222,43 @@ export async function ingestAnswer(
     };
   }
 
+  // Comparative-question: apply relative boosts (winner positive, loser neutral)
+  await applyComparativeBoost(userId, db, input, snapshot);
+
   return {
     accepted: true,
     personaUpdated: true,
     feedStale: true,
     followUpQuestion: null,
   };
+}
+
+async function applyComparativeBoost(
+  userId: string,
+  db: ReturnType<typeof getDb>,
+  input: LearningAnswerInput,
+  snapshot: PersonaSnapshot
+): Promise<void> {
+  const { data } = await db
+    .from("learning_questions")
+    .select("*")
+    .eq("id", input.questionId)
+    .maybeSingle();
+
+  if (!data) return;
+  const row = data as Record<string, unknown>;
+  if (!row.is_comparative || !row.comparison_items) return;
+
+  const items = row.comparison_items as { a: string; b: string };
+  const selected = input.answer.selected as string | undefined;
+  if (!selected) return;
+
+  const winner = selected === "a" ? items.a : items.b;
+  const COMPARATIVE_BOOST = 0.15;
+
+  snapshot.preferences.tags[winner] =
+    (snapshot.preferences.tags[winner] || 0) + COMPARATIVE_BOOST;
+  snapshot.updatedAt = new Date().toISOString();
+  await upsertSnapshot(snapshot);
 }
 

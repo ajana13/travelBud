@@ -20,6 +20,8 @@ export interface PersonaSnapshot {
   };
   learningBudget: {
     usedThisPeriod: number;
+    standaloneCount: number;
+    attachedCount: number;
     periodStart: string;
     periodEnd: string;
   };
@@ -54,7 +56,7 @@ export function createDefaultSnapshot(userId: string): PersonaSnapshot {
     preferences: { pillar: {}, tags: {} },
     hardFilters: [],
     cadenceState: { answeredCount: 0, ignoredCount: 0, currentRate: 1, lastUpdatedAt: now },
-    learningBudget: { usedThisPeriod: 0, periodStart: now, periodEnd: now },
+    learningBudget: { usedThisPeriod: 0, standaloneCount: 0, attachedCount: 0, periodStart: now, periodEnd: now },
     boostState: { completed: false, skipped: false, startedAt: null, completedAt: null },
     travelState: { isAway: false, currentLocation: null, homeLocation: { lat: 47.6062, lng: -122.3321 } },
     plainLanguageProjections: [],

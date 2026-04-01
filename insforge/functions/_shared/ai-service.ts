@@ -246,3 +246,96 @@ export async function getBoostStatus(
   };
 }
 
+// ─── Explanation polishing ──────────────────────────────────────────────────
+
+interface ExplanationFact {
+  factType: string;
+  factKey: string;
+  factValue: string;
+  contributes: "positive" | "negative" | "neutral";
+}
+
+export function polishExplanation(facts: ExplanationFact[]): string {
+  const positives = facts.filter((f) => f.contributes === "positive");
+  const negatives = facts.filter((f) => f.contributes === "negative");
+
+  if (positives.length === 0 && negatives.length === 0) {
+    return "Something new to explore in your area";
+  }
+
+  const parts: string[] = [];
+
+  if (positives.length > 0) {
+    const reasons = positives.map((f) => f.factValue);
+    if (reasons.length === 1) {
+      parts.push("Matches your interest in " + reasons[0]);
+    } else {
+      const last = reasons.pop()!;
+      parts.push("Matches your interests in " + reasons.join(", ") + " and " + last);
+    }
+  }
+
+  if (negatives.length > 0) {
+    parts.push("though it may not match all your preferences");
+  }
+
+  const location = facts.find((f) => f.factType === "location");
+  if (location && location.factValue !== "Seattle") {
+    parts.push("in " + location.factValue);
+  }
+
+  return parts.join(" — ");
+}
+
+// ─── Learning question generation ───────────────────────────────────────────
+
+interface GeneratedQuestion {
+  id: string;
+  topicFamily: string;
+  questionText: string;
+  expectedLift: number;
+  confidenceGap: number;
+  channelEligibility: string[];
+  answerSchema: Record<string, unknown>;
+  isComparative: boolean;
+  comparisonItems: null;
+  sourceType: "llm_generated";
+  sensitiveTopicFlag: boolean;
+  createdAt: string;
+  expiresAt: null;
+}
+
+const QUESTION_TEMPLATES: Array<{ topic: string; text: string }> = [
+  { topic: "dining", text: "What type of cuisine do you enjoy most for a casual night out?" },
+  { topic: "outdoors", text: "Do you prefer water activities or trail-based adventures?" },
+  { topic: "events", text: "Are you more drawn to live music or cultural events like art shows?" },
+  { topic: "social", text: "Do you usually prefer going out solo, with one other person, or in a group?" },
+  { topic: "timing", text: "Are you more of a morning explorer or an evening person?" },
+  { topic: "budget", text: "For a great experience, do you prefer splurging or finding hidden gems on a budget?" },
+];
+
+export function generateLearningQuestion(
+  topicFamily: string | null
+): GeneratedQuestion {
+  let template = QUESTION_TEMPLATES.find((t) => t.topic === topicFamily);
+  if (!template) {
+    template = QUESTION_TEMPLATES[Math.floor(Math.random() * QUESTION_TEMPLATES.length)];
+  }
+
+  return {
+    id: crypto.randomUUID(),
+    topicFamily: template.topic,
+    questionText: template.text,
+    expectedLift: 0.3,
+    confidenceGap: 0.5,
+    channelEligibility: ["push", "in_app_chat"],
+    answerSchema: { type: "free_text", maxLength: 200 },
+    isComparative: false,
+    comparisonItems: null,
+    sourceType: "llm_generated",
+    sensitiveTopicFlag: false,
+    createdAt: new Date().toISOString(),
+    expiresAt: null,
+  };
+}
+

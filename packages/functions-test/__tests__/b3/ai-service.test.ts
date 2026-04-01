@@ -3,6 +3,8 @@ import {
   generateChatReply,
   startPersonaBoost,
   getBoostStatus,
+  polishExplanation,
+  generateLearningQuestion,
 } from "../../../../insforge/functions/_shared/ai-service.ts";
 import { seedTable, getTableData, resetMock } from "../../mocks/insforge-sdk.ts";
 
@@ -149,6 +151,62 @@ describe("ai-service", () => {
       }]);
       const result = await getBoostStatus("user-001");
       expect(result.status).toBe("skipped");
+    });
+  });
+
+  describe("polishExplanation()", () => {
+    it("returns exploration text when no positive or negative facts", () => {
+      const text = polishExplanation([
+        { factType: "location", factKey: "neighborhood", factValue: "Capitol Hill", contributes: "neutral" as const },
+      ]);
+      expect(text).toBe("Something new to explore in your area");
+    });
+
+    it("describes a single positive match", () => {
+      const text = polishExplanation([
+        { factType: "tag_match", factKey: "tag", factValue: "live-music", contributes: "positive" as const },
+      ]);
+      expect(text).toContain("live-music");
+      expect(text).toContain("interest");
+    });
+
+    it("joins multiple positive reasons naturally", () => {
+      const text = polishExplanation([
+        { factType: "pillar_match", factKey: "pillar", factValue: "events", contributes: "positive" as const },
+        { factType: "tag_match", factKey: "tag", factValue: "outdoor", contributes: "positive" as const },
+      ]);
+      expect(text).toContain("events");
+      expect(text).toContain("outdoor");
+    });
+
+    it("includes location when neighborhood is specific", () => {
+      const text = polishExplanation([
+        { factType: "tag_match", factKey: "tag", factValue: "sushi", contributes: "positive" as const },
+        { factType: "location", factKey: "neighborhood", factValue: "Ballard", contributes: "neutral" as const },
+      ]);
+      expect(text).toContain("Ballard");
+    });
+  });
+
+  describe("generateLearningQuestion()", () => {
+    it("generates a question with required fields", () => {
+      const q = generateLearningQuestion(null);
+      expect(q.id).toBeTruthy();
+      expect(q.questionText).toBeTruthy();
+      expect(q.sourceType).toBe("llm_generated");
+      expect(q.channelEligibility.length).toBeGreaterThan(0);
+    });
+
+    it("generates a topic-specific question when given a topic", () => {
+      const q = generateLearningQuestion("dining");
+      expect(q.topicFamily).toBe("dining");
+      expect(q.questionText.toLowerCase()).toContain("cuisine");
+    });
+
+    it("falls back to random topic for unknown topic", () => {
+      const q = generateLearningQuestion("unknown_topic");
+      expect(q.questionText).toBeTruthy();
+      expect(q.topicFamily).toBeTruthy();
     });
   });
 });

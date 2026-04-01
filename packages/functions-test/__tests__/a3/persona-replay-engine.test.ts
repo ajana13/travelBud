@@ -8,6 +8,7 @@ import {
   applyConfirmation,
   applySystemDecision,
   applyPersonaEdit,
+  decayPreferences,
 } from "../../../../insforge/functions/_shared/persona-replay-engine.ts";
 import { createDefaultSnapshot } from "../../../../insforge/functions/_shared/persona-snapshot-store.ts";
 
@@ -165,6 +166,103 @@ describe("persona-replay-engine", () => {
       const result = applyPersonaEdit(snap, payload);
       const proj = result.plainLanguageProjections.find((p) => p.id === "proj-1");
       expect(proj!.statement).toBe("Loves sushi and ramen");
+    });
+  });
+
+  describe("applyAction() ambiguity-first", () => {
+    it("discounts pass weight when tag confidence is low", () => {
+      const snap = createDefaultSnapshot(USER_ID);
+      snap.preferences.tags = { sushi: -0.1 };
+      const payload = {
+        type: "action" as const,
+        actionType: "pass" as const,
+        itemId: "item-1",
+        reasons: null,
+        freeText: null,
+      };
+      const result = applyAction(snap, payload, { tags: ["sushi"] });
+      // Low confidence (abs(-0.1) < 0.3) so pass weight is discounted by 0.5
+      const delta = result.preferences.tags["sushi"] - (-0.1);
+      expect(delta).toBeGreaterThan(-0.15);
+    });
+
+    it("applies stronger pass weight when contradicting a positive signal", () => {
+      const snap = createDefaultSnapshot(USER_ID);
+      snap.preferences.tags = { hiking: 0.5 };
+      const payload = {
+        type: "action" as const,
+        actionType: "pass" as const,
+        itemId: "item-1",
+        reasons: null,
+        freeText: null,
+      };
+      const result = applyAction(snap, payload, { tags: ["hiking"] });
+      const delta = result.preferences.tags["hiking"] - 0.5;
+      // Contradiction amplification: 1.5x base weight
+      expect(delta).toBeLessThan(-0.15);
+    });
+
+    it("applies stronger im_in weight when contradicting a negative signal", () => {
+      const snap = createDefaultSnapshot(USER_ID);
+      snap.preferences.tags = { karaoke: -0.3 };
+      const payload = {
+        type: "action" as const,
+        actionType: "im_in" as const,
+        itemId: "item-1",
+        reasons: null,
+        freeText: null,
+      };
+      const result = applyAction(snap, payload, { tags: ["karaoke"] });
+      const delta = result.preferences.tags["karaoke"] - (-0.3);
+      // Contradiction: 1.5x im_in weight
+      expect(delta).toBeGreaterThan(0.3);
+    });
+
+    it("cant action applies zero weight", () => {
+      const snap = createDefaultSnapshot(USER_ID);
+      snap.preferences.tags = { music: 0.5 };
+      const payload = {
+        type: "action" as const,
+        actionType: "cant" as const,
+        itemId: "item-1",
+        reasons: null,
+        freeText: null,
+      };
+      const result = applyAction(snap, payload, { tags: ["music"] });
+      expect(result.preferences.tags["music"]).toBe(0.5);
+    });
+  });
+
+  describe("decayPreferences()", () => {
+    it("decays tag scores toward zero", () => {
+      const snap = createDefaultSnapshot(USER_ID);
+      snap.preferences.tags = { music: 0.5, sushi: -0.4 };
+      const result = decayPreferences(snap);
+      expect(result.preferences.tags["music"]).toBeLessThan(0.5);
+      expect(result.preferences.tags["music"]).toBeGreaterThan(0);
+      expect(result.preferences.tags["sushi"]!).toBeGreaterThan(-0.4);
+      expect(result.preferences.tags["sushi"]!).toBeLessThan(0);
+    });
+
+    it("removes near-zero scores", () => {
+      const snap = createDefaultSnapshot(USER_ID);
+      snap.preferences.tags = { tiny: 0.005 };
+      const result = decayPreferences(snap);
+      expect(result.preferences.tags["tiny"]).toBeUndefined();
+    });
+
+    it("decays pillar scores too", () => {
+      const snap = createDefaultSnapshot(USER_ID);
+      snap.preferences.pillar = { events: 0.8 };
+      const result = decayPreferences(snap);
+      expect(result.preferences.pillar["events"]).toBeLessThan(0.8);
+    });
+
+    it("supports custom decay factor", () => {
+      const snap = createDefaultSnapshot(USER_ID);
+      snap.preferences.tags = { music: 1.0 };
+      const result = decayPreferences(snap, 0.5);
+      expect(result.preferences.tags["music"]).toBeCloseTo(0.5);
     });
   });
 

@@ -5,6 +5,7 @@ import {
   checkSessionCap,
   updateCadence,
   SESSION_CAP,
+  markPushTTL,
 } from "../../../../insforge/functions/_shared/learning-service.ts";
 import { seedTable, getTableData, resetMock } from "../../mocks/insforge-sdk.ts";
 
@@ -81,9 +82,10 @@ describe("learning-service", () => {
   });
 
   describe("selectNextQuestion()", () => {
-    it("returns null prompt when no questions in DB", async () => {
+    it("returns generated prompt when no questions in DB", async () => {
       const result = await selectNextQuestion("user-001");
-      expect(result.prompt).toBeNull();
+      expect(result.prompt).not.toBeNull();
+      expect(result.prompt!.sourceType).toBe("llm_generated");
       expect(result.sessionCap).toBe(SESSION_CAP);
       expect(result.sessionLearningCount).toBe(0);
     });
@@ -124,7 +126,15 @@ describe("learning-service", () => {
         expires_at: "2020-01-01T00:00:00Z",
       }]);
       const result = await selectNextQuestion("user-001");
-      expect(result.prompt).toBeNull();
+      expect(result.prompt).not.toBeNull();
+      expect(result.prompt!.sourceType).toBe("llm_generated");
+    });
+
+    it("falls back to generated question when no DB questions available", async () => {
+      const result = await selectNextQuestion("user-001");
+      expect(result.prompt).not.toBeNull();
+      expect(result.prompt!.sourceType).toBe("llm_generated");
+      expect(result.prompt!.questionText).toBeTruthy();
     });
   });
 
@@ -169,6 +179,32 @@ describe("learning-service", () => {
       const last = events![events!.length - 1];
       expect(last.type).toBe("learning_answer");
       expect(last.user_id).toBe("user-001");
+    });
+
+    it("applies comparative boost when question is comparative", async () => {
+      seedTable("learning_questions", [SAMPLE_QUESTION_ROW]);
+      await ingestAnswer("user-001", {
+        questionId: "q-001",
+        answer: { selected: "a" },
+        sourceSurface: "in_app_chat",
+        linkedRecommendationId: null,
+      });
+      const snaps = getTableData("persona_snapshots");
+      expect(snaps).toBeDefined();
+      const snap = snaps![snaps!.length - 1];
+      const prefs = snap.preferences as { tags: Record<string, number> };
+      expect(prefs.tags["sushi"]).toBeGreaterThan(0);
+    });
+  });
+
+  describe("markPushTTL()", () => {
+    it("sets expires_at on a question row", async () => {
+      seedTable("learning_questions", [SAMPLE_QUESTION_ROW]);
+      await markPushTTL("q-001");
+      const questions = getTableData("learning_questions");
+      const q = questions!.find((r: Record<string, unknown>) => r.id === "q-001");
+      expect(q).toBeDefined();
+      expect(q!.expires_at).toBeTruthy();
     });
   });
 });

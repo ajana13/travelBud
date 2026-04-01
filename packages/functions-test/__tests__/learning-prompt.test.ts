@@ -39,7 +39,8 @@ describe("learning-prompt", () => {
     const body = await getBody(res);
     expect(body.data).toHaveProperty("sessionCap");
     expect(body.data).toHaveProperty("sessionLearningCount");
-    expect(body.data.prompt).toBeNull();
+    expect(body.data.prompt).not.toBeNull();
+    expect(body.data.prompt.sourceType).toBe("llm_generated");
     expectCors(res);
   });
 

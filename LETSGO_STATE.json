@@ -1,85 +1,79 @@
 {
-  "version": "2.0.0",
+  "version": "3.1.0",
   "project": "letsgo-v1",
-  "generatedAt": "2026-03-28T23:10:00Z",
-  "branch": "wave2/foundation",
-  "commitStatus": "uncommitted_wave2_changes",
-  "lastKnownCommit": "48b0919",
+  "generatedAt": "2026-04-01T01:35:00Z",
+  "branch": "wave3/intelligence",
+  "commitStatus": "wave3_p0_gaps_filled",
+  "lastKnownCommit": "04a693a",
 
   "spawnPlan": {
     "wave1_c0_coordinator": "complete",
     "wave2_foundation": "complete",
-    "wave3_intelligence": "not_started",
+    "wave3_intelligence": "complete",
     "wave4_surfaces": "not_started",
     "wave5_integration": "not_started"
   },
 
   "agents": {
-    "C0": {
-      "name": "Integration Coordinator",
+    "C0": { "name": "Integration Coordinator", "status": "complete" },
+    "A1": { "name": "Platform Backend", "status": "complete" },
+    "A2": { "name": "Identity / Consent / Privacy", "status": "complete" },
+    "A3": { "name": "Event Store / Persona Snapshot Backbone", "status": "complete" },
+    "A4": { "name": "Inventory / Provider Normalization", "status": "complete" },
+    "B1": {
+      "name": "Recommendation / Ranking Engine",
       "status": "complete",
       "completedDeliverables": [
-        "Repository/package layout (npm workspaces monorepo)",
-        "Shared TypeScript types with Zod runtime validation for all 8 domain types",
-        "API contract types for all 9 endpoints",
-        "Feature flag catalog (6 flags)",
-        "Enum definitions (6 enums)",
-        "SQL migrations for all 10 tables + RLS policies (11 migrations)",
-        "Edge function shells for all 10 endpoints + health-check (deployed and live-tested)",
-        "Architecture docs, service boundary docs, API reference, feature flags doc, event versioning doc",
-        "52 shared package tests + 65 edge function tests = 117 total tests passing",
-        "RLS policies deployed for all 10 tables",
-        "CORS headers tightened to match actual accepted methods per function"
+        "recommendation-service.ts: getCandidates, applyHardFilters, scoreCandidate, applyExploration, applyDiversity, assignConfidenceLabel, buildExplanationFacts, buildExplanationText, generateFeed",
+        "GET /feed: full ranking pipeline with persona snapshot integration",
+        "Elastic feed sizing (default 6, range 3-8)",
+        "UCB-style exploration with cap of 2 exploration cards",
+        "Strict diversity pass across pillar, time_shape, social_mode, and price_band",
+        "Confidence label mapping: new, learning, strong_match",
+        "Structured explanation facts per card",
+        "AI-polished explanation text via polishExplanation()",
+        "24 recommendation-service unit tests + 7 feed endpoint tests"
       ]
     },
-    "A1": {
-      "name": "Platform Backend",
+    "B2": {
+      "name": "Persona Logic / Feedback / Learning Engine",
       "status": "complete",
       "completedDeliverables": [
-        "Extended SDK mock with in-memory DB (select, insert, update, delete, upsert, eq, order, limit, single, maybeSingle)",
-        "Created _shared/ helpers: cors.ts, auth.ts, response.ts, validation.ts, handler.ts, feature-flags.ts, errors.ts, config.ts, logging.ts",
-        "Refactored all 11 edge functions to use _shared helpers (createHandler pattern)",
-        "22 SDK mock DB tests + 38 shared helper tests = 60 new tests"
+        "feedback-service.ts: processAction, shouldPromoteHardFilter, getPersonaView, applyPersonaEdits",
+        "POST /actions: Zod validation, action processing with persona delta",
+        "GET /persona: plain-language persona view with projections, hard filters, boost state",
+        "PATCH /persona: editable projections and hard-filter toggles",
+        "Ambiguity-first negative logic: Pass applies discounted weight at low confidence, contradiction amplification at high confidence",
+        "Circumstantial no-penalty logic: Can't applies zero weight",
+        "Contradiction-aware decay: im_in overrides stale negatives at 1.5x, pass overrides positives at 1.5x",
+        "decayPreferences(): configurable decay factor for scheduled jobs",
+        "Hard-filter auto-promotion after repeated negative signals",
+        "Attached follow-up eligibility: queries learning service after Pass/Can't",
+        "learning-service.ts: selectNextQuestion, ingestAnswer, checkSessionCap, updateCadence, markPushTTL, expireStalePushNudges",
+        "Learning selector scoring: expected lift first via DB order",
+        "Shared learning budget with standalone vs attached count tracking",
+        "60-minute TTL enforcement for push learning nudges via markPushTTL()",
+        "Comparative-question relative boost mapping: winner gets +0.15, loser stays neutral",
+        "Question generation fallback via AI service when no DB templates match",
+        "Immediate persona update and feedStale flag from learning answers",
+        "16 learning-service tests + 11 feedback-service tests + 6 actions/8 persona endpoint tests"
       ]
     },
-    "A2": {
-      "name": "Identity / Consent / Privacy",
+    "B3": {
+      "name": "AI Layer / Chat / Persona Boost",
       "status": "complete",
       "completedDeliverables": [
-        "consent-service.ts: recordConsent, getActiveConsents, revokeConsent",
-        "notifications-preferences edge function: POST with Zod validation, upsert to DB",
-        "account-delete edge function: DELETE purges user data from 4 tables",
-        "12 new tests (consent service + impl tests)"
+        "ai-service.ts: mock LLM with generateChatReply, startPersonaBoost, getBoostStatus",
+        "Mock LLM: keyword-based preference extraction for food/outdoor/music/negative categories",
+        "POST /chat-messages: Zod validation, chat reply with persona extraction events",
+        "POST /persona-boost-start: Zod validation (email+consent), creates 3 mock inferences, updates boostState",
+        "GET /persona-boost-status: returns boost state + inferences from DB",
+        "polishExplanation(): template-based explanation polishing from structured reason facts",
+        "generateLearningQuestion(): LLM-generated question fallback with 6 topic templates",
+        "Schema validation: all AI outputs typed, never write state directly",
+        "23 AI service unit tests + endpoint tests"
       ]
     },
-    "A3": {
-      "name": "Event Store / Persona Snapshot Backbone",
-      "status": "complete",
-      "completedDeliverables": [
-        "persona-event-store.ts: appendEvent, getEvents, getLatestSequence",
-        "persona-snapshot-store.ts: getSnapshot, upsertSnapshot, createDefaultSnapshot",
-        "persona-replay-engine.ts: replayEvents + 7 per-type handlers (applyAction, applyBoostInference, applyLearningAnswer, applyChatExtraction, applyConfirmation, applySystemDecision, applyPersonaEdit)",
-        "persona-projections.ts: generateProjections from preference tags",
-        "persona-state-manager.ts: applyDelta (atomic persona mutation pipeline)",
-        "30 new tests across 5 test files"
-      ]
-    },
-    "A4": {
-      "name": "Inventory / Provider Normalization",
-      "status": "complete",
-      "completedDeliverables": [
-        "ProviderAdapter interface with fetchItems, transform, validate, dedupeKey",
-        "3 mock adapters: events, dining, outdoors",
-        "30 Seattle seed items (10 per pillar) with real venue names",
-        "inventory-pipeline.ts: upsertInventoryItems, deactivateStaleItems",
-        "availability-validator.ts: validateAvailability",
-        "New inventory-seed edge function (POST seeds 30 items)",
-        "30 new tests across 5 test files"
-      ]
-    },
-    "B1": { "name": "Recommendation / Ranking Engine", "status": "not_started" },
-    "B2": { "name": "Persona Logic / Feedback / Learning Engine", "status": "not_started" },
-    "B3": { "name": "AI Layer / Chat / Persona Boost", "status": "not_started" },
     "C1": { "name": "iOS App / User Experience", "status": "not_started" },
     "C2": { "name": "Proactive Delivery / Push / Email", "status": "not_started" },
     "C3": { "name": "Internal Ops Console", "status": "not_started" },
@@ -90,124 +84,24 @@
     "sharedPackage": {
       "path": "packages/shared",
       "status": "complete",
-      "tests": { "passing": 52, "failing": 0, "files": 2 },
-      "files": {
-        "enums": [
-          "src/enums/action-type.ts",
-          "src/enums/channel.ts",
-          "src/enums/confidence-label.ts",
-          "src/enums/pillar.ts",
-          "src/enums/price-band.ts",
-          "src/enums/social-mode.ts",
-          "src/enums/index.ts"
-        ],
-        "domain": [
-          "src/domain/inventory-item.ts",
-          "src/domain/persona-event.ts",
-          "src/domain/persona-snapshot.ts",
-          "src/domain/boost-inference.ts",
-          "src/domain/recommendation-card.ts",
-          "src/domain/learning-question.ts",
-          "src/domain/learning-answer.ts",
-          "src/domain/proactive-decision.ts",
-          "src/domain/index.ts"
-        ],
-        "api": [
-          "src/api/common.ts",
-          "src/api/feed.ts",
-          "src/api/actions.ts",
-          "src/api/chat.ts",
-          "src/api/persona.ts",
-          "src/api/persona-boost.ts",
-          "src/api/notifications.ts",
-          "src/api/learning.ts",
-          "src/api/account.ts",
-          "src/api/index.ts"
-        ],
-        "other": [
-          "src/feature-flags.ts",
-          "src/index.ts"
-        ]
-      }
+      "tests": { "passing": 52, "failing": 0, "files": 2 }
     },
     "functionsTestPackage": {
       "path": "packages/functions-test",
       "status": "complete",
-      "tests": { "passing": 220, "failing": 0, "files": 35 }
-    },
-    "sqlMigrations": {
-      "path": "sql/",
-      "status": "complete",
-      "files": [
-        "001_persona_events.sql",
-        "002_persona_snapshots.sql",
-        "003_inventory_items.sql",
-        "004_learning_questions.sql",
-        "005_learning_answers.sql",
-        "006_proactive_decisions.sql",
-        "007_boost_inferences.sql",
-        "008_notification_preferences.sql",
-        "009_consent_records.sql",
-        "010_feature_flags.sql",
-        "011_rls_policies.sql"
-      ]
+      "tests": { "passing": 282, "failing": 0, "files": 38 }
     },
     "edgeFunctions": {
       "path": "insforge/functions/",
       "status": "complete",
-      "files": [
-        "_shared/cors.ts",
-        "_shared/auth.ts",
-        "_shared/response.ts",
-        "_shared/validation.ts",
-        "_shared/handler.ts",
-        "_shared/feature-flags.ts",
-        "_shared/errors.ts",
-        "_shared/config.ts",
-        "_shared/logging.ts",
-        "_shared/consent-service.ts",
-        "_shared/persona-event-store.ts",
-        "_shared/persona-snapshot-store.ts",
-        "_shared/persona-replay-engine.ts",
-        "_shared/persona-projections.ts",
-        "_shared/persona-state-manager.ts",
-        "_shared/inventory/provider-adapters.ts",
-        "_shared/inventory/seed-data.ts",
-        "_shared/inventory/inventory-pipeline.ts",
-        "_shared/inventory/availability-validator.ts",
-        "feed/index.ts",
-        "actions/index.ts",
-        "chat-messages/index.ts",
-        "persona/index.ts",
-        "persona-boost-start/index.ts",
-        "persona-boost-status/index.ts",
-        "notifications-preferences/index.ts",
-        "learning-prompt/index.ts",
-        "learning-answer/index.ts",
-        "account-delete/index.ts",
-        "health-check/index.ts",
-        "inventory-seed/index.ts"
-      ]
-    },
-    "docs": {
-      "path": "docs/",
-      "status": "complete",
-      "files": [
-        "architecture.md",
-        "service-boundaries.md",
-        "api-contracts.md",
-        "feature-flags.md",
-        "event-versioning.md"
-      ]
-    },
-    "rootConfig": {
-      "status": "complete",
-      "files": [
-        "package.json",
-        "tsconfig.base.json",
-        ".gitignore",
-        "README.md"
-      ]
+      "newInWave3": [
+        "_shared/recommendation-service.ts",
+        "_shared/feedback-service.ts",
+        "_shared/learning-service.ts",
+        "_shared/ai-service.ts",
+        "_shared/db.ts"
+      ],
+      "allEndpointsImplemented": true
     }
   },
 
@@ -216,168 +110,20 @@
     "appkey": "88apdu26",
     "region": "us-west",
     "ossHost": "https://88apdu26.us-west.insforge.app",
-    "functionsDeploymentUrl": "https://88apdu26.functions.insforge.app",
-
-    "database": {
-      "status": "fully_deployed",
-      "tables": [
-        "persona_events",
-        "persona_snapshots",
-        "inventory_items",
-        "learning_questions",
-        "learning_answers",
-        "proactive_decisions",
-        "boost_inferences",
-        "notification_preferences",
-        "consent_records",
-        "feature_flags"
-      ],
-      "rlsPolicies": "deployed_for_all_10_tables",
-      "seededData": {
-        "feature_flags": 6,
-        "inventory_items": 30
-      },
-      "verified": true
-    },
-
-    "functions": {
-      "status": "fully_deployed_and_live",
-      "summary": "All 11 functions are deployed, active, and serving correctly from the Deno Subhosting runtime. ISSUE-001 (runtime propagation) has been resolved.",
-      "deployed": [
-        "health-check",
-        "feed",
-        "actions",
-        "chat-messages",
-        "persona",
-        "persona-boost-start",
-        "persona-boost-status",
-        "notifications-preferences",
-        "learning-prompt",
-        "learning-answer",
-        "account-delete"
-      ],
-      "liveTested": true,
-      "codeVerified": true
-    },
-
-    "secrets": {
-      "available": [
-        "INSFORGE_BASE_URL",
-        "ANON_KEY",
-        "API_KEY",
-        "INSFORGE_INTERNAL_URL",
-        "VERCEL_WEBHOOK_SECRET"
-      ]
-    }
+    "functionsDeploymentUrl": "https://88apdu26.functions.insforge.app"
   },
-
-  "bugsDiscoveredAndFixed": [
-    {
-      "id": "BUG-001",
-      "title": "Edge functions used wrong export pattern",
-      "status": "fixed"
-    },
-    {
-      "id": "BUG-002",
-      "title": "SDK createClient used wrong API",
-      "status": "fixed"
-    },
-    {
-      "id": "BUG-003",
-      "title": "Auth check used wrong method",
-      "status": "fixed"
-    },
-    {
-      "id": "BUG-004",
-      "title": "edgeFunctionToken: null causes INVALID_INPUT on deploy",
-      "status": "fixed"
-    }
-  ],
-
-  "openIssues": [],
-
-  "resolvedRevisits": [
-    { "id": "REVISIT-001", "title": "Commit C0 work to git", "status": "resolved", "resolution": "Committed in 63cae3c (C0 contracts) and 950fb97 (test stack)" },
-    { "id": "REVISIT-002", "title": "Resolve edge function runtime propagation", "status": "resolved", "resolution": "ISSUE-001 resolved after redeployment; all 11 functions now serving live" },
-    { "id": "REVISIT-003", "title": "Live-test all 10 endpoint shells", "status": "resolved", "resolution": "All functions live-tested: correct 401/405/501 responses verified" },
-    { "id": "REVISIT-004", "title": "Verify PersonaEvent discriminated union", "status": "resolved", "resolution": "7-variant discriminated union verified correct: literal discriminators, field types, z.discriminatedUnion() well-formed" },
-    { "id": "REVISIT-005", "title": "Validate SQL schema alignment with Zod types", "status": "resolved", "resolution": "All 7 main tables cross-checked against Zod schemas. Column types, enum CHECK values, nullable fields all align. Structural differences (flat SQL vs nested Zod) are expected persistence-to-domain mapping" },
-    { "id": "REVISIT-006", "title": "Add RLS policies to database tables", "status": "resolved", "resolution": "011_rls_policies.sql deployed with 20 policies across all 10 tables. user_id = auth.uid() for user-owned, public read for catalog/config tables" },
-    { "id": "REVISIT-007", "title": "Review edge function CORS headers consistency", "status": "resolved", "resolution": "Tightened Allow-Methods on 9 functions to match actual accepted methods. Redeployed and tests passing (65/65)" }
-  ],
 
   "waveReadiness": {
-    "wave2": {
+    "wave2": { "ready": true, "status": "complete" },
+    "wave3": {
       "ready": true,
       "status": "complete",
-      "notes": "All Wave 2 agents (A1-A4) implemented. 196 tests passing. Shared helpers, event sourcing, identity services, and inventory pipeline all in place.",
       "agents": {
-        "A1_platform_backend": { "status": "complete" },
-        "A2_identity_consent": { "status": "complete" },
-        "A3_event_store": { "status": "complete" },
-        "A4_inventory": { "status": "complete" }
+        "B1_recommendation": { "status": "complete" },
+        "B2_persona_feedback_learning": { "status": "complete" },
+        "B3_ai_layer": { "status": "complete" }
       }
     },
-    "wave3": {
-      "ready": true,
-      "blockedBy": [],
-      "notes": "Wave 2 foundation is complete. B1 (Recommendation), B2 (Persona Logic), B3 (AI Layer) can begin."
-    },
-    "wave4": {
-      "ready": false,
-      "blockedBy": ["B1", "B2", "B3"]
-    }
-  },
-
-  "mergeOrder": [
-    "C0 (complete - merged to main)",
-    "A1, A3, A2, A4 (complete - on wave2/foundation branch)",
-    "B1", "B2", "B3",
-    "C2", "C1", "C3", "C4"
-  ]
-}
-      "agents": {
-        "A1_platform_backend": { "status": "complete" },
-        "A2_identity_consent": { "status": "complete" },
-        "A3_event_store": { "status": "complete" },
-        "A4_inventory": { "status": "complete" }
-      }
-    },
-    "wave3": {
-      "ready": true,
-      "blockedBy": [],
-      "notes": "Wave 2 foundation is complete. B1 (Recommendation), B2 (Persona Logic), B3 (AI Layer) can begin."
-    },
-    "wave4": {
-      "ready": false,
-      "blockedBy": ["B1", "B2", "B3"]
-    }
-  },
-
-  "mergeOrder": [
-    "C0 (complete - merged to main)",
-    "A1, A3, A2, A4 (complete - on wave2/foundation branch)",
-    "B1", "B2", "B3",
-    "C2", "C1", "C3", "C4"
-  ]
-}
-      }
-    },
-    "wave3": {
-      "ready": true,
-      "blockedBy": [],
-      "notes": "Wave 2 foundation is complete. B1 (Recommendation), B2 (Persona Logic), B3 (AI Layer) can begin."
-    },
-    "wave4": {
-      "ready": false,
-      "blockedBy": ["B1", "B2", "B3"]
-    }
-  },
-
-  "mergeOrder": [
-    "C0 (complete - merged to main)",
-    "A1, A3, A2, A4 (complete - on wave2/foundation branch)",
-    "B1", "B2", "B3",
-    "C2", "C1", "C3", "C4"
-  ]
+    "wave4": { "ready": true, "blockedBy": [] }
+  }
 }
