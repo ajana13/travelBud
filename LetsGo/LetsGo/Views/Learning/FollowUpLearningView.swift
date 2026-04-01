@@ -20,7 +20,7 @@ struct FollowUpLearningView: View {
                 VStack(spacing: 8) {
                     Image(systemName: "lightbulb.fill")
                         .font(.system(size: 32))
-                        .foregroundStyle(.learningOrange)
+                        .foregroundStyle(Color.learningOrange)
 
                     Text("Quick Question")
                         .font(.title3)
@@ -58,7 +58,7 @@ struct FollowUpLearningView: View {
                                     )
                                     .foregroundStyle(
                                         viewModel?.selectedAnswerID == answer.id
-                                            ? .letsGoBlue
+                                            ? Color.letsGoBlue
                                             : .primary
                                     )
                                     .overlay(

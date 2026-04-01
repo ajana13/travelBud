@@ -6,14 +6,6 @@ struct PostActivityConfirmationView: View {
     let card: RecommendationCard
     @State private var viewModel: PostActivityViewModel?
 
-    private var pillarEmoji: String {
-        switch card.pillar {
-        case .events: "🎶"
-        case .dining: "🍴"
-        case .outdoors: "⛰"
-        }
-    }
-
     var body: some View {
         VStack(spacing: 20) {
             // Done button
@@ -25,13 +17,14 @@ struct PostActivityConfirmationView: View {
                 }
                 .font(.body)
                 .fontWeight(.medium)
-                .foregroundStyle(.letsGoBlue)
+                .foregroundStyle(Color.letsGoBlue)
             }
             .padding(.top, 8)
 
-            // Event emoji
-            Text(pillarEmoji)
-                .font(.system(size: 52))
+            // Event icon (reliable across simulator font/runtime differences)
+            Image(systemName: card.pillar.iconName)
+                .font(.system(size: 44, weight: .semibold))
+                .foregroundStyle(Color.letsGoBlue)
                 .padding(.top, 16)
 
             // Title
@@ -72,8 +65,16 @@ struct PostActivityConfirmationView: View {
                         }
                     } label: {
                         HStack(spacing: 12) {
-                            Text(sentiment.emoji)
-                                .font(.title3)
+                            // Use a fixed leading visual slot so emoji appears
+                            // where an image thumbnail would normally go.
+                            ZStack {
+                                RoundedRectangle(cornerRadius: 10)
+                                    .fill(Color(.systemBackground))
+                                Image(systemName: sentiment.iconName)
+                                    .font(.system(size: 20, weight: .semibold))
+                                    .foregroundStyle(Color.letsGoBlue)
+                            }
+                            .frame(width: 40, height: 40)
 
                             Text(sentiment.displayText)
                                 .font(.body)
@@ -99,6 +100,7 @@ struct PostActivityConfirmationView: View {
                         )
                         .clipShape(RoundedRectangle(cornerRadius: 12))
                     }
+                    .buttonStyle(.plain)
                 }
             }
 

@@ -8,9 +8,10 @@ final class AppState {
     let sessionTracker: SessionTracker
     var pendingPostActivityCards: [RecommendationCard] = []
     var showPostActivitySheet: Bool = false
+    var handledRecommendationIDs: Set<String> = []
 
     init(
-        apiClient: any APIClientProtocol? = nil,
+        apiClient: (any APIClientProtocol)? = nil,
         sessionTracker: SessionTracker = SessionTracker()
     ) {
         self.sessionTracker = sessionTracker
@@ -30,5 +31,13 @@ final class AppState {
             pendingPostActivityCards.removeFirst()
         }
         showPostActivitySheet = !pendingPostActivityCards.isEmpty
+    }
+
+    func markRecommendationHandled(_ card: RecommendationCard) {
+        handledRecommendationIDs.insert(card.id)
+    }
+
+    func resetHandledRecommendations() {
+        handledRecommendationIDs.removeAll()
     }
 }

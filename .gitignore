@@ -15,3 +15,6 @@
 
 # InsForge & AI agent skills
 .qoder
+
+# Swift / Xcode build artifacts
+LetsGo/.build/

@@ -16,27 +16,26 @@ struct RecommendationCardView: View {
         }
     }
 
-    private var pillarEmoji: String {
-        switch card.pillar {
-        case .events: "🎶"
-        case .dining: "🍴"
-        case .outdoors: "⛰"
-        }
-    }
-
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
             // Image area
             ZStack(alignment: .topTrailing) {
-                LinearGradient(
-                    colors: gradientColors,
-                    startPoint: .topLeading,
-                    endPoint: .bottomTrailing
-                )
-                .frame(height: 130)
-                .overlay {
-                    Text(pillarEmoji)
-                        .font(.system(size: 44))
+                if let imageURL = card.imageURL {
+                    AsyncImage(url: imageURL) { phase in
+                        switch phase {
+                        case .success(let image):
+                            image
+                                .resizable()
+                                .scaledToFill()
+                        default:
+                            fallbackHero
+                        }
+                    }
+                    .frame(height: 130)
+                    .clipped()
+                } else {
+                    fallbackHero
+                        .frame(height: 130)
                 }
 
                 ConfidenceBadge(label: card.confidenceLabel)
@@ -51,13 +50,11 @@ struct RecommendationCardView: View {
                     .foregroundStyle(.primary)
 
                 HStack(spacing: 4) {
-                    Text(card.pillar.displayText)
+                    Text(card.itineraryTheme)
                     Text("·")
-                    Text(card.location)
+                    Text(card.bestForTimeOfDay)
                     Text("·")
-                    Text(card.priceBand.displayText)
-                    Text("·")
-                    Text(card.availability)
+                    Text(card.estimatedDuration)
                 }
                 .font(.caption)
                 .foregroundStyle(.secondary)
@@ -69,7 +66,16 @@ struct RecommendationCardView: View {
                         .lineLimit(2)
                 }
 
-                TagsView(tags: card.tags)
+                VStack(alignment: .leading, spacing: 6) {
+                    ForEach(Array(card.itineraryStops.prefix(3).enumerated()), id: \.offset) { idx, stop in
+                        Text("\(idx + 1). \(stop)")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                            .lineLimit(1)
+                    }
+                }
+
+                TagsView(tags: [card.bestForSeason, card.availability] + card.tags)
 
                 ActionButtonBar(onAction: onAction)
             }
@@ -77,5 +83,18 @@ struct RecommendationCardView: View {
         }
         .background(Color(.systemBackground))
         .clipShape(RoundedRectangle(cornerRadius: 16))
+    }
+
+    private var fallbackHero: some View {
+        LinearGradient(
+            colors: gradientColors,
+            startPoint: .topLeading,
+            endPoint: .bottomTrailing
+        )
+        .overlay {
+            Image(systemName: card.pillar.iconName)
+                .font(.system(size: 44, weight: .semibold))
+                .foregroundStyle(.white.opacity(0.92))
+        }
     }
 }

@@ -7,17 +7,25 @@ enum Sentiment: String, Codable, Hashable {
 
     var displayText: String {
         switch self {
-        case .loved: "Yes, loved it!"
-        case .okay: "Went, it was okay"
+        case .loved: "I went and loved it"
+        case .okay: "I went and didn't like it"
         case .didntGo: "Didn't end up going"
         }
     }
 
     var emoji: String {
         switch self {
-        case .loved: "👍"
-        case .okay: "😐"
+        case .loved: "😍"
+        case .okay: "👎"
         case .didntGo: "👋"
+        }
+    }
+
+    var iconName: String {
+        switch self {
+        case .loved: "heart.fill"
+        case .okay: "hand.thumbsdown.fill"
+        case .didntGo: "xmark.circle.fill"
         }
     }
 }

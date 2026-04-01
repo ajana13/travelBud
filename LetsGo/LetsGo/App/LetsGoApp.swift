@@ -9,26 +9,32 @@ struct LetsGoApp: App {
     var body: some Scene {
         WindowGroup {
             TabView(selection: $selectedTab) {
-                Tab("Feed", systemImage: "house.fill", value: 0) {
-                    NavigationStack(path: $router.path) {
-                        HomeFeedView()
-                            .navigationDestination(for: Route.self) { route in
-                                routeDestination(route)
-                            }
-                    }
+                NavigationStack(path: $router.path) {
+                    HomeFeedView()
+                        .navigationDestination(for: Route.self) { route in
+                            routeDestination(route)
+                        }
                 }
+                .tabItem {
+                    Label("Feed", systemImage: "house.fill")
+                }
+                .tag(0)
 
-                Tab("Notifications", systemImage: "bell.fill", value: 1) {
-                    NavigationStack {
-                        NotificationPreviewView()
-                    }
+                NavigationStack {
+                    NotificationPreviewView()
                 }
+                .tabItem {
+                    Label("Notifications", systemImage: "bell.fill")
+                }
+                .tag(1)
 
-                Tab("Digest", systemImage: "envelope.fill", value: 2) {
-                    NavigationStack {
-                        WeeklyDigestView()
-                    }
+                NavigationStack {
+                    WeeklyDigestView()
                 }
+                .tabItem {
+                    Label("Digest", systemImage: "envelope.fill")
+                }
+                .tag(2)
             }
             .tint(.letsGoBlue)
             .environment(appState)

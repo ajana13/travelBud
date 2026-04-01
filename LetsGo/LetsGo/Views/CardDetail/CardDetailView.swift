@@ -16,27 +16,26 @@ struct CardDetailView: View {
         }
     }
 
-    private var pillarEmoji: String {
-        switch card.pillar {
-        case .events: "🎶"
-        case .dining: "🍴"
-        case .outdoors: "⛰"
-        }
-    }
-
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 0) {
                 // Hero image
-                LinearGradient(
-                    colors: gradientColors,
-                    startPoint: .topLeading,
-                    endPoint: .bottomTrailing
-                )
-                .frame(height: 200)
-                .overlay {
-                    Text(pillarEmoji)
-                        .font(.system(size: 60))
+                if let imageURL = card.imageURL {
+                    AsyncImage(url: imageURL) { phase in
+                        switch phase {
+                        case .success(let image):
+                            image
+                                .resizable()
+                                .scaledToFill()
+                        default:
+                            fallbackHero
+                        }
+                    }
+                    .frame(height: 200)
+                    .clipped()
+                } else {
+                    fallbackHero
+                        .frame(height: 200)
                 }
 
                 VStack(alignment: .leading, spacing: 18) {
@@ -48,12 +47,18 @@ struct CardDetailView: View {
                                 .fontWeight(.bold)
 
                             HStack(spacing: 4) {
-                                Text(card.location)
+                                Text(card.itineraryTheme)
                                 Text("·")
-                                Text(card.availability)
+                                Text(card.bestForTimeOfDay)
+                                Text("·")
+                                Text(card.estimatedDuration)
                             }
                             .font(.subheadline)
                             .foregroundStyle(.secondary)
+
+                            Text("\(card.location) · \(card.availability)")
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
                         }
 
                         Spacer()
@@ -64,8 +69,27 @@ struct CardDetailView: View {
                     // Explanation
                     ExplanationSection(facts: card.explanationFacts)
 
+                    detailSection(
+                        title: "Itinerary flow",
+                        icon: "map.fill",
+                        items: card.itineraryStops
+                    )
+
+                    // Travel plan details only in expanded detail panel
+                    detailSection(
+                        title: "How to get there",
+                        icon: "map",
+                        items: card.itinerarySteps
+                    )
+
+                    detailSection(
+                        title: "Know before you go",
+                        icon: "checklist",
+                        items: card.arrivalChecklist
+                    )
+
                     // Tags
-                    TagsView(tags: card.tags + [card.priceBand.displayText, card.socialMode])
+                    TagsView(tags: [card.bestForSeason, card.availability, card.priceBand.displayText, card.socialMode] + card.tags)
 
                     // Primary actions
                     HStack(spacing: 8) {
@@ -76,7 +100,7 @@ struct CardDetailView: View {
                                 .font(.headline)
                                 .frame(maxWidth: .infinity)
                                 .padding(.vertical, 14)
-                                .background(.imInGreen)
+                                .background(Color.imInGreen)
                                 .foregroundStyle(.white)
                                 .clipShape(RoundedRectangle(cornerRadius: 12))
                         }
@@ -142,10 +166,10 @@ struct CardDetailView: View {
                             .fontWeight(.semibold)
                             .frame(maxWidth: .infinity)
                             .padding(.vertical, 14)
-                            .foregroundStyle(.letsGoBlue)
+                            .foregroundStyle(Color.letsGoBlue)
                             .overlay(
                                 RoundedRectangle(cornerRadius: 12)
-                                    .stroke(.letsGoBlue, lineWidth: 1)
+                                    .stroke(Color.letsGoBlue, lineWidth: 1)
                             )
                         }
                     }
@@ -165,16 +189,63 @@ struct CardDetailView: View {
     private func handleAction(_ type: ActionType) {
         switch type {
         case .imIn:
+            appState.markRecommendationHandled(card)
             appState.registerImIn(card: card)
             Task { await viewModel?.performAction(.imIn) }
             router.popToRoot()
         case .maybe:
+            appState.markRecommendationHandled(card)
             Task { await viewModel?.performAction(.maybe) }
             router.popToRoot()
         case .pass:
+            appState.markRecommendationHandled(card)
             router.navigate(to: .passReasonPicker(card))
         case .cant:
+            appState.markRecommendationHandled(card)
             router.navigate(to: .cantReasonPicker(card))
         }
+    }
+
+    private var fallbackHero: some View {
+        LinearGradient(
+            colors: gradientColors,
+            startPoint: .topLeading,
+            endPoint: .bottomTrailing
+        )
+        .overlay {
+            Image(systemName: card.pillar.iconName)
+                .font(.system(size: 56, weight: .semibold))
+                .foregroundStyle(.white.opacity(0.92))
+        }
+    }
+
+    @ViewBuilder
+    private func detailSection(title: String, icon: String, items: [String]) -> some View {
+        VStack(alignment: .leading, spacing: 10) {
+            Label(title, systemImage: icon)
+                .font(.subheadline)
+                .fontWeight(.semibold)
+                .foregroundStyle(Color.letsGoBlue)
+
+            VStack(alignment: .leading, spacing: 8) {
+                ForEach(Array(items.enumerated()), id: \.offset) { index, item in
+                    HStack(alignment: .top, spacing: 8) {
+                        Text("\(index + 1).")
+                            .font(.footnote)
+                            .fontWeight(.semibold)
+                            .foregroundStyle(.secondary)
+
+                        Text(item)
+                            .font(.subheadline)
+                            .foregroundStyle(.primary)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
+                }
+            }
+        }
+        .padding(14)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(Color(.systemGray6))
+        .clipShape(RoundedRectangle(cornerRadius: 12))
     }
 }

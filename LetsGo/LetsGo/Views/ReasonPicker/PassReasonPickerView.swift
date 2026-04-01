@@ -20,24 +20,19 @@ struct PassReasonPickerView: View {
 
                 VStack(spacing: 8) {
                     ForEach(PassReason.allCases, id: \.self) { reason in
+                        let isSelected = viewModel?.selectedReason == reason
+                        let borderColor: Color = isSelected ? .letsGoBlue : Color(.systemGray3)
+                        let fillColor: Color = isSelected ? .letsGoBlue : .clear
+
                         Button {
                             viewModel?.selectedReason = reason
                         } label: {
                             HStack(spacing: 12) {
                                 Circle()
-                                    .strokeBorder(
-                                        viewModel?.selectedReason == reason
-                                            ? Color.letsGoBlue
-                                            : Color(.systemGray3),
-                                        lineWidth: 2
-                                    )
+                                    .strokeBorder(borderColor, lineWidth: 2)
                                     .background(
                                         Circle()
-                                            .fill(
-                                                viewModel?.selectedReason == reason
-                                                    ? Color.letsGoBlue
-                                                    : Color.clear
-                                            )
+                                            .fill(fillColor)
                                             .padding(4)
                                     )
                                     .frame(width: 22, height: 22)

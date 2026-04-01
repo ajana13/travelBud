@@ -8,7 +8,7 @@ struct ExplanationSection: View {
             Text("Why we picked this")
                 .font(.caption)
                 .fontWeight(.semibold)
-                .foregroundStyle(.letsGoBlue)
+                .foregroundStyle(Color.letsGoBlue)
 
             ForEach(facts, id: \.self) { fact in
                 Text(fact)

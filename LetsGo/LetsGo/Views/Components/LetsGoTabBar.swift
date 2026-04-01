@@ -5,15 +5,23 @@ struct LetsGoTabBar: View {
 
     var body: some View {
         TabView(selection: $selectedTab) {
-            Tab("Feed", systemImage: "house.fill", value: 0) {
-                Color.clear
-            }
-            Tab("Notifications", systemImage: "bell.fill", value: 1) {
-                Color.clear
-            }
-            Tab("Digest", systemImage: "envelope.fill", value: 2) {
-                Color.clear
-            }
+            Color.clear
+                .tabItem {
+                    Label("Feed", systemImage: "house.fill")
+                }
+                .tag(0)
+
+            Color.clear
+                .tabItem {
+                    Label("Notifications", systemImage: "bell.fill")
+                }
+                .tag(1)
+
+            Color.clear
+                .tabItem {
+                    Label("Digest", systemImage: "envelope.fill")
+                }
+                .tag(2)
         }
     }
 }

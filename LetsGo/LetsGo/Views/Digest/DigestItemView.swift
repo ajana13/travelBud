@@ -66,7 +66,7 @@ struct DigestItemView: View {
                         .fontWeight(.semibold)
                         .frame(maxWidth: .infinity)
                         .padding(.vertical, 10)
-                        .background(.letsGoBlue)
+                        .background(Color.letsGoBlue)
                         .foregroundStyle(.white)
                         .clipShape(RoundedRectangle(cornerRadius: 10))
                 }

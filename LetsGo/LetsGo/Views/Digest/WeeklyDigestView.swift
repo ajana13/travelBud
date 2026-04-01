@@ -11,7 +11,7 @@ struct WeeklyDigestView: View {
                     Text("LetsGo")
                         .font(.title)
                         .fontWeight(.bold)
-                        .foregroundStyle(.letsGoBlue)
+                        .foregroundStyle(Color.letsGoBlue)
 
                     Text("Weekly Picks \u{00B7} Mar 28")
                         .font(.caption)
