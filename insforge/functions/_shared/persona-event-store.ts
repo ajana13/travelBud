@@ -1,4 +1,4 @@
-import { getDb } from "./db.ts";
+import { getDatabase } from "./platform/factory.ts";
 
 interface PersonaEventInput {
   id: string;
@@ -14,7 +14,7 @@ interface PersonaEventInput {
 export async function appendEvent(
   event: PersonaEventInput
 ): Promise<{ error: { message: string } | null }> {
-  const db = getDb();
+  const db = getDatabase();
 
   let seq = event.sequenceNumber;
   if (seq < 0) {
@@ -40,7 +40,7 @@ export async function getEvents(
   userId: string,
   opts?: { afterSequence?: number }
 ): Promise<Array<Record<string, unknown>>> {
-  const db = getDb();
+  const db = getDatabase();
   const query = db.from("persona_events").select("*").eq("user_id", userId).order("sequence_number", { ascending: true });
 
   const { data, error } = await query;

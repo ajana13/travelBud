@@ -1,4 +1,4 @@
-import { getDb } from "./db.ts";
+import { getDatabase } from "./platform/factory.ts";
 import { appendEvent, getLatestSequence } from "./persona-event-store.ts";
 import { applyDelta } from "./persona-state-manager.ts";
 import {
@@ -154,7 +154,7 @@ export async function startPersonaBoost(
 
   const boostId = crypto.randomUUID();
   const now = new Date().toISOString();
-  const db = getDb();
+  const db = getDatabase();
 
   const mockInferences = [
     { category: "dining", direction: "positive" as const, strength: 0.6, label: "Enjoys trying new restaurants" },
@@ -212,7 +212,7 @@ export async function getBoostStatus(
   userId: string
 ): Promise<BoostStatusResult> {
   const snapshot = (await getSnapshot(userId)) ?? createDefaultSnapshot(userId);
-  const db = getDb();
+  const db = getDatabase();
 
   let status: BoostStatusResult["status"] = "not_started";
   if (snapshot.boostState.skipped) status = "skipped";

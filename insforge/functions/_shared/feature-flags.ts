@@ -1,9 +1,9 @@
-import { getDb } from "./db.ts";
+import { getDatabase } from "./platform/factory.ts";
 
 export async function getFeatureFlag(
   flagName: string
 ): Promise<Record<string, unknown> | null> {
-  const db = getDb();
+  const db = getDatabase();
   const { data, error } = await db.from("feature_flags").select("*").eq("flag_name", flagName).maybeSingle();
   if (error || !data) return null;
   return data as Record<string, unknown>;

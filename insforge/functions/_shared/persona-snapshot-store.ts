@@ -1,4 +1,4 @@
-import { getDb } from "./db.ts";
+import { getDatabase } from "./platform/factory.ts";
 
 export interface PersonaSnapshot {
   userId: string;
@@ -102,7 +102,7 @@ function snapshotToRow(snap: PersonaSnapshot): Record<string, unknown> {
 }
 
 export async function getSnapshot(userId: string): Promise<PersonaSnapshot | null> {
-  const db = getDb();
+  const db = getDatabase();
   const { data, error } = await db.from("persona_snapshots").select("*").eq("user_id", userId).maybeSingle();
   if (error || !data) return null;
   return rowToSnapshot(data as Record<string, unknown>);
@@ -111,7 +111,7 @@ export async function getSnapshot(userId: string): Promise<PersonaSnapshot | nul
 export async function upsertSnapshot(
   snap: PersonaSnapshot
 ): Promise<{ error: { message: string } | null }> {
-  const db = getDb();
+  const db = getDatabase();
   const row = snapshotToRow(snap);
   const { error } = await db.from("persona_snapshots").upsert(row);
   return { error };

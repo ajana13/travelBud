@@ -1,4 +1,4 @@
-import { getDb } from "./db.ts";
+import { getDatabase } from "./platform/factory.ts";
 import { polishExplanation } from "./ai-service.ts";
 
 // ─── Types ──────────────────────────────────────────────────────────────────
@@ -78,7 +78,7 @@ const EXPLORATION_RATE = 0.25;
 // ─── Candidate retrieval ────────────────────────────────────────────────────
 
 export async function getCandidates(): Promise<InventoryRow[]> {
-  const db = getDb();
+  const db = getDatabase();
   const { data } = await db
     .from("inventory_items")
     .select("*")

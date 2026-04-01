@@ -1,4 +1,4 @@
-import { getDb } from "./db.ts";
+import { getDatabase } from "./platform/factory.ts";
 
 interface ConsentInput {
   userId: string;
@@ -9,7 +9,7 @@ interface ConsentInput {
 export async function recordConsent(
   input: ConsentInput
 ): Promise<{ error: { message: string } | null }> {
-  const db = getDb();
+  const db = getDatabase();
   const row = {
     id: crypto.randomUUID(),
     user_id: input.userId,
@@ -25,7 +25,7 @@ export async function recordConsent(
 export async function getActiveConsents(
   userId: string
 ): Promise<Array<Record<string, unknown>>> {
-  const db = getDb();
+  const db = getDatabase();
   const { data, error } = await db.from("consent_records").select("*").eq("user_id", userId).eq("granted", true);
   if (error || !data) return [];
   return data as Array<Record<string, unknown>>;
@@ -35,7 +35,7 @@ export async function revokeConsent(
   userId: string,
   consentType: string
 ): Promise<{ error: { message: string } | null }> {
-  const db = getDb();
+  const db = getDatabase();
   const { error } = await db.from("consent_records").update({ revoked_at: new Date().toISOString(), granted: false }).eq("user_id", userId).eq("consent_type", consentType);
   return { error };
 }

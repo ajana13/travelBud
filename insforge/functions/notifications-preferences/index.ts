@@ -1,8 +1,8 @@
-import { createClient } from "npm:@insforge/sdk";
 import { z } from "npm:zod";
 import { createHandler } from "../_shared/handler.ts";
 import { jsonOk, jsonError } from "../_shared/response.ts";
 import { validateBody } from "../_shared/validation.ts";
+import { getDatabase } from "../_shared/platform/factory.ts";
 
 const NotificationPrefsSchema = z.object({
   pushEnabled: z.boolean(),
@@ -31,11 +31,7 @@ export default createHandler({
     }
 
     const prefs = validation.data;
-    const client = createClient({
-      baseUrl: Deno.env.get("INSFORGE_BASE_URL"),
-      anonKey: Deno.env.get("ANON_KEY"),
-    });
-    const db = client.database;
+    const db = getDatabase();
 
     const row = {
       id: user!.id,

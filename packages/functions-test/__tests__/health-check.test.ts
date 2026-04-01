@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import handler from "../../../insforge/functions/health-check/index.ts";
-import { getLastCreateClientOpts, resetMock } from "../mocks/insforge-sdk.ts";
+import { resetMock } from "../mocks/insforge-sdk.ts";
 import { makeRequest, getBody, expectCors } from "./helpers.ts";
 
 beforeEach(() => resetMock());
@@ -21,10 +21,8 @@ describe("health-check", () => {
     expectCors(res);
   });
 
-  it("uses anonKey for client creation (not edgeFunctionToken)", async () => {
-    await handler(makeRequest("GET"));
-    const opts = getLastCreateClientOpts();
-    expect(opts).toHaveProperty("anonKey");
-    expect(opts).not.toHaveProperty("edgeFunctionToken");
+  it("does not require authentication", async () => {
+    const res = await handler(makeRequest("GET"));
+    expect(res.status).toBe(200);
   });
 });

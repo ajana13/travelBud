@@ -1,4 +1,4 @@
-import { getDb } from "./db.ts";
+import { getDatabase } from "./platform/factory.ts";
 import { appendEvent, getLatestSequence } from "./persona-event-store.ts";
 import { applyDelta } from "./persona-state-manager.ts";
 import {
@@ -125,7 +125,7 @@ export async function selectNextQuestion(
     return { prompt: null, sessionLearningCount: used, sessionCap: SESSION_CAP };
   }
 
-  const db = getDb();
+  const db = getDatabase();
   const now = new Date().toISOString();
 
   const { data, error } = await db
@@ -160,7 +160,7 @@ export async function selectNextQuestion(
 const PUSH_TTL_MS = 60 * 60 * 1000;
 
 export async function markPushTTL(questionId: string): Promise<void> {
-  const db = getDb();
+  const db = getDatabase();
   const expiresAt = new Date(Date.now() + PUSH_TTL_MS).toISOString();
   await db
     .from("learning_questions")
@@ -169,7 +169,7 @@ export async function markPushTTL(questionId: string): Promise<void> {
 }
 
 export async function expireStalePushNudges(): Promise<number> {
-  const db = getDb();
+  const db = getDatabase();
   const now = new Date().toISOString();
   const { data } = await db
     .from("learning_questions")
@@ -194,7 +194,7 @@ export async function ingestAnswer(
   userId: string,
   input: LearningAnswerInput
 ): Promise<LearningAnswerResult> {
-  const db = getDb();
+  const db = getDatabase();
   const answerRow = {
     id: crypto.randomUUID(),
     user_id: userId,
@@ -248,7 +248,7 @@ export async function ingestAnswer(
 
 async function applyComparativeBoost(
   userId: string,
-  db: ReturnType<typeof getDb>,
+  db: ReturnType<typeof getDatabase>,
   input: LearningAnswerInput,
   snapshot: PersonaSnapshot
 ): Promise<void> {

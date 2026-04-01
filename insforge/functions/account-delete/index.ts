@@ -1,6 +1,6 @@
-import { createClient } from "npm:@insforge/sdk";
 import { createHandler } from "../_shared/handler.ts";
 import { jsonOk, jsonError } from "../_shared/response.ts";
+import { getDatabase } from "../_shared/platform/factory.ts";
 
 const TABLES_TO_PURGE = [
   "persona_events",
@@ -13,11 +13,7 @@ export default createHandler({
   methods: ["DELETE"],
   requireAuth: true,
   handle: async ({ user, corsHeaders }) => {
-    const client = createClient({
-      baseUrl: Deno.env.get("INSFORGE_BASE_URL"),
-      anonKey: Deno.env.get("ANON_KEY"),
-    });
-    const db = client.database;
+    const db = getDatabase();
     const userId = user!.id;
 
     for (const table of TABLES_TO_PURGE) {

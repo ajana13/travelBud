@@ -1,31 +1,20 @@
-import { createClient } from "npm:@insforge/sdk";
+import { getAuth } from "./platform/factory.ts";
 
 export interface AuthResult {
   authenticated: boolean;
   user: { id: string; [key: string]: unknown } | null;
-  client: ReturnType<typeof createClient> | null;
+  client: unknown | null;
   error: "UNAUTHORIZED" | null;
 }
 
 export async function authenticateRequest(req: Request): Promise<AuthResult> {
-  const authHeader = req.headers.get("Authorization");
-  const token = authHeader ? authHeader.replace("Bearer ", "") : null;
+  const auth = getAuth();
+  const result = await auth.authenticateRequest(req);
 
-  if (!token) {
-    return { authenticated: false, user: null, client: null, error: "UNAUTHORIZED" };
-  }
-
-  const client = createClient({
-    baseUrl: Deno.env.get("INSFORGE_BASE_URL"),
-    anonKey: Deno.env.get("ANON_KEY"),
-    isServerMode: true,
-    edgeFunctionToken: token,
-  });
-
-  const { data: userData } = await client.auth.getCurrentUser();
-  if (!userData?.user?.id) {
-    return { authenticated: false, user: null, client: null, error: "UNAUTHORIZED" };
-  }
-
-  return { authenticated: true, user: userData.user, client, error: null };
+  return {
+    authenticated: result.authenticated,
+    user: result.user,
+    client: null,
+    error: result.authenticated ? null : "UNAUTHORIZED",
+  };
 }

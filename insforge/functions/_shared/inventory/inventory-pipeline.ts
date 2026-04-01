@@ -1,4 +1,4 @@
-import { getDb } from "../db.ts";
+import { getDatabase } from "../platform/factory.ts";
 
 function itemToRow(item: Record<string, unknown>): Record<string, unknown> {
   const loc = (item.location ?? {}) as Record<string, unknown>;
@@ -36,7 +36,7 @@ function itemToRow(item: Record<string, unknown>): Record<string, unknown> {
 export async function upsertInventoryItems(
   items: Record<string, unknown>[]
 ): Promise<{ upserted: number; error: { message: string } | null }> {
-  const db = getDb();
+  const db = getDatabase();
   const rows = items.map(itemToRow);
   const { error } = await db.from("inventory_items").upsert(rows);
   if (error) return { upserted: 0, error };
@@ -47,7 +47,7 @@ export async function deactivateStaleItems(
   sourceProvider: string,
   activeIds: string[]
 ): Promise<{ deactivated: number; error: { message: string } | null }> {
-  const db = getDb();
+  const db = getDatabase();
   const { data } = await db.from("inventory_items").select("*").eq("source_provider", sourceProvider).eq("active", true);
 
   if (!data) return { deactivated: 0, error: null };
