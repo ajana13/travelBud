@@ -106,7 +106,7 @@ describe("learning-service", () => {
         version: 1,
         preferences: { pillar: {}, tags: {} },
         hard_filters: [],
-        cadence_state: { answeredCount: 5, ignoredCount: 0, currentRate: 1, lastUpdatedAt: "" },
+        cadence_state: { answeredCount: SESSION_CAP, ignoredCount: 0, currentRate: 1, lastUpdatedAt: "" },
         learning_budget: { usedThisPeriod: SESSION_CAP, periodStart: "", periodEnd: "" },
         boost_state: { completed: false, skipped: false, startedAt: null, completedAt: null },
         travel_state: { isAway: false, currentLocation: null, homeLocation: { lat: 47.6, lng: -122.3 } },

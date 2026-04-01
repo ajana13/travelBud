@@ -35,5 +35,20 @@ describe("persona-projections", () => {
       const projections = generateProjections(snap);
       expect(projections.every((p) => p.editable)).toBe(true);
     });
+
+    it("generates negative projections for strongly negative tags", () => {
+      const snap = createDefaultSnapshot(USER_ID);
+      snap.preferences.tags = { karaoke: -0.5, loud: -0.8 };
+      const projections = generateProjections(snap);
+      expect(projections).toHaveLength(2);
+      expect(projections.every((p) => p.statement.startsWith("Tends to avoid"))).toBe(true);
+    });
+
+    it("ignores mildly negative tags", () => {
+      const snap = createDefaultSnapshot(USER_ID);
+      snap.preferences.tags = { meh: -0.1 };
+      const projections = generateProjections(snap);
+      expect(projections).toHaveLength(0);
+    });
   });
 });

@@ -49,7 +49,7 @@ interface LearningAnswerResult {
 
 // ─── Constants ──────────────────────────────────────────────────────────────
 
-export const SESSION_CAP = 5;
+export const SESSION_CAP = 2;
 
 // ─── DB helper ──────────────────────────────────────────────────────────────
 
@@ -72,6 +72,18 @@ function rowToQuestion(row: Record<string, unknown>): LearningQuestion {
     createdAt: row.created_at as string,
     expiresAt: (row.expires_at as string) || null,
   };
+}
+
+// ─── Sensitive-topic context gating ──────────────────────────────────────────
+
+function hasPriorContext(snapshot: PersonaSnapshot, topicFamily: string): boolean {
+  const tags = snapshot.preferences.tags;
+  for (const tag of Object.keys(tags)) {
+    if (tag.toLowerCase().includes(topicFamily.toLowerCase()) && tags[tag] !== 0) {
+      return true;
+    }
+  }
+  return false;
 }
 
 // ─── Session cap check ──────────────────────────────────────────────────────
@@ -130,7 +142,8 @@ export async function selectNextQuestion(
   const rows = data as Array<Record<string, unknown>>;
   const candidates = rows
     .map(rowToQuestion)
-    .filter((q) => !q.expiresAt || q.expiresAt > now);
+    .filter((q) => !q.expiresAt || q.expiresAt > now)
+    .filter((q) => !q.sensitiveTopicFlag || hasPriorContext(snapshot, q.topicFamily));
 
   if (candidates.length === 0) {
     const generated = generateLearningQuestion(null);

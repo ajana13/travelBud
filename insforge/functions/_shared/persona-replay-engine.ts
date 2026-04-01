@@ -161,6 +161,12 @@ export function applyChatExtraction(
   payload: ChatExtractionPayload
 ): PersonaSnapshot {
   const result = cloneSnap(snap);
+  if (payload.field) {
+    const isNegative = payload.newValue?.toLowerCase().startsWith("avoids");
+    const delta = isNegative ? -0.3 : 0.3;
+    result.preferences.tags[payload.field] =
+      (result.preferences.tags[payload.field] || 0) + delta;
+  }
   return result;
 }
 

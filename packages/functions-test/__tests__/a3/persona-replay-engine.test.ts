@@ -106,18 +106,30 @@ describe("persona-replay-engine", () => {
   });
 
   describe("applyChatExtraction()", () => {
-    it("is a pure function that returns updated snapshot", () => {
+    it("applies positive preference delta for positive extraction", () => {
       const snap = createDefaultSnapshot(USER_ID);
       const payload = {
         type: "chat_extraction" as const,
         conversationId: "conv-1",
-        field: "cuisine_preference",
+        field: "sushi",
         oldValue: null,
-        newValue: "Japanese",
+        newValue: "likes sushi",
       };
       const result = applyChatExtraction(snap, payload);
-      expect(result).toBeDefined();
-      expect(result.userId).toBe(USER_ID);
+      expect(result.preferences.tags["sushi"]).toBeGreaterThan(0);
+    });
+
+    it("applies negative preference delta for 'avoids' extraction", () => {
+      const snap = createDefaultSnapshot(USER_ID);
+      const payload = {
+        type: "chat_extraction" as const,
+        conversationId: "conv-1",
+        field: "crowded-venues",
+        oldValue: null,
+        newValue: "avoids crowded-venues",
+      };
+      const result = applyChatExtraction(snap, payload);
+      expect(result.preferences.tags["crowded-venues"]).toBeLessThan(0);
     });
   });
 
